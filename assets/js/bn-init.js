@@ -63,7 +63,7 @@
 			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'dayGridMonth,timeGridWeek,listWeek'
+				right: 'dayGridMonth,dayGridWeek,listWeek'
 			},
 			// Source iCalendar servie par le proxy PHP (same-origin, pas de CORS).
 			events: {

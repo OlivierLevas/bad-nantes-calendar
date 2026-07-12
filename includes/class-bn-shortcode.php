@@ -103,7 +103,9 @@ class BN_Shortcode {
 		$options = BN_Settings::get_options();
 
 		// Traduit la vue FR en vue FullCalendar.
-		$initial_view = ( 'semaine' === strtolower( $atts['view'] ) ) ? 'timeGridWeek' : 'dayGridMonth';
+		// « semaine » = dayGridWeek : 7 colonnes (une par jour), événements listés
+		// dans chaque colonne (pas de grille horaire).
+		$initial_view = ( 'semaine' === strtolower( $atts['view'] ) ) ? 'dayGridWeek' : 'dayGridMonth';
 
 		// id unique pour autoriser plusieurs calendriers sur une même page.
 		self::$instance_count++;
