@@ -56,7 +56,7 @@
 
 /* Jour courant surligné en vert citron très clair */
 .bn-calendar .fc-day-today {
-	background-color: var(--bn-citron-clair) !important;
+	background-color: var(--wp--preset--color--accent-1, var(--bn-vert-fonce)) !important;
 }
 
 .bn-calendar .fc-day-today .fc-daygrid-day-number {
