@@ -64,6 +64,11 @@
 	color: var(--wp--preset--color--base, var(--bn-vert-fonce));
 }
 
+/* En-tête de colonne du jour courant : couleur base (les autres en-têtes restent clairs). */
+.bn-calendar th.fc-day-today .fc-col-header-cell-cushion {
+	color: var(--wp--preset--color--base, var(--bn-texte-clair));
+}
+
 /* Événements */
 .bn-calendar .fc-event,
 .bn-calendar .fc-event .fc-event-main {
@@ -112,15 +117,21 @@
 	opacity: 0.95;
 }
 
-/* Colonne de l'icône (1re colonne du bloc lieu) : ne réserve pas de largeur fixe,
-   pour laisser l'adresse occuper la place. */
+/* Colonne de l'icône (1re colonne du bloc lieu) : annule le flex-basis:45px inline
+   du gabarit (!important requis pour battre le style inline), l'adresse prend la place. */
 .bn-calendar .bn-event-location .wp-block-columns > .wp-block-column:first-child {
-	flex-basis: 0;
+	flex-basis: 0 !important;
 }
 
 /* Bouton icône du bloc lieu : léger décalage vertical pour l'aligner avec l'adresse. */
 .bn-calendar .bn-event-location .wp-block-button {
 	margin-top: var(--wp--preset--spacing--20);
+}
+
+/* Annule le fond base forcé (!important) par la classe de bloc has-base-background-color
+   à l'intérieur du calendrier, pour laisser apparaître le fond accent-1 du .bn-event. */
+.bn-calendar .has-base-background-color {
+	background-color: transparent !important;
 }
 
 /* Liens du bloc lieu : lisibles sur fond vert foncé */
