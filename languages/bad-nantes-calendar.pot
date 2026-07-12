@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Bad'Nantes Calendar 1.0.0\n"
-"Report-Msgid-Bugs-To: https://github.com/REMPLACER-COMPTE/bad-nantes-calendar/issues\n"
+"Report-Msgid-Bugs-To: https://github.com/olivierlev/bad-nantes-calendar/issues\n"
 "POT-Creation-Date: 2026-07-12 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -19,15 +19,11 @@ msgid "Bad'Nantes Calendar"
 msgstr ""
 
 #: includes/class-bn-settings.php
-msgid "Configuration de l'agenda Google"
+msgid "Configuration du flux d'agenda (ICS)"
 msgstr ""
 
 #: includes/class-bn-settings.php
-msgid "Clé API Google"
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "ID de l'agenda Google"
+msgid "URL du flux ICS"
 msgstr ""
 
 #: includes/class-bn-settings.php
@@ -43,11 +39,7 @@ msgid "Vue par défaut sur mobile"
 msgstr ""
 
 #: includes/class-bn-settings.php
-msgid "Clé API du projet Google Cloud (API Calendar activée)."
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "Exemple : xxxx@group.calendar.google.com"
+msgid "Le flux doit être public. Il est récupéré côté serveur (avec cache) : pas de problème de CORS."
 msgstr ""
 
 #: includes/class-bn-settings.php
@@ -63,7 +55,7 @@ msgid "Vue affichée automatiquement sur petit écran (moins de 600px)."
 msgstr ""
 
 #: includes/class-bn-settings.php
-msgid "Renseignez la clé API Google et l'ID de l'agenda public. Consultez le README pour créer la clé et restreindre son usage."
+msgid "Collez l'URL publique du flux iCal (ICS) de votre agenda. Aucune clé API n'est nécessaire. Consultez le README pour trouver cette URL (Google, Outlook, Nextcloud…)."
 msgstr ""
 
 #: includes/class-bn-settings.php
@@ -75,5 +67,5 @@ msgid "Insérez un des shortcodes suivants dans une page ou un article :"
 msgstr ""
 
 #: includes/class-bn-shortcode.php
-msgid "Agenda non configuré : renseignez la clé API et l'ID d'agenda dans les réglages."
+msgid "Agenda non configuré : renseignez l'URL du flux ICS dans les réglages."
 msgstr ""

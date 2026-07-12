@@ -34,8 +34,8 @@
 			return;
 		}
 
-		// Message clair si la configuration est incomplète.
-		if (!config.apiKey || !config.calendarId) {
+		// Message clair si la configuration est incomplète (aucune URL ICS enregistrée).
+		if (!config.configured || !config.icsUrl) {
 			el.textContent = config.i18n && config.i18n.missingConfig ? config.i18n.missingConfig : 'Agenda non configuré.';
 			return;
 		}
@@ -50,16 +50,17 @@
 			slotMaxTime: config.slotMaxTime,
 			height: 'auto',
 			nowIndicator: true,
-			// Un événement peut porter un lien Google : on garde l'affichage en bloc cliquable.
+			// Un événement peut porter un lien (propriété URL de l'ICS) : bloc cliquable.
 			eventDisplay: 'block',
 			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',
 				right: 'dayGridMonth,timeGridWeek,listWeek'
 			},
-			googleCalendarApiKey: config.apiKey,
+			// Source iCalendar servie par le proxy PHP (same-origin, pas de CORS).
 			events: {
-				googleCalendarId: config.calendarId
+				url: config.icsUrl,
+				format: 'ics'
 			},
 			// Bascule automatique de vue au redimensionnement (desktop <-> mobile).
 			windowResize: function () {

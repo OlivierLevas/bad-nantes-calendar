@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Bad'Nantes Calendar
- * Plugin URI:        https://github.com/REMPLACER-COMPTE/bad-nantes-calendar
+ * Plugin URI:        https://github.com/olivierlev/bad-nantes-calendar
  * Description:        Affiche l'agenda Google public du club Bad'Nantes via FullCalendar 6, en vue semaine (grille horaire) ou vue mois. FullCalendar est embarqué en local, pas de CDN.
  * Version:           1.0.0
  * Requires at least: 5.8
@@ -31,14 +31,14 @@ define( 'BN_CALENDAR_URL', plugin_dir_url( __FILE__ ) );
 /**
  * URL du dépôt GitHub utilisée par Plugin Update Checker pour les mises à jour.
  *
- * TODO: remplacer par ton compte GitHub (ex. https://github.com/mon-compte/bad-nantes-calendar/).
  */
-define( 'BN_CALENDAR_GITHUB_URL', 'https://github.com/REMPLACER-COMPTE/bad-nantes-calendar/' );
+define( 'BN_CALENDAR_GITHUB_URL', 'https://github.com/olivierlev/bad-nantes-calendar/' );
 
 /**
  * Charge les classes du plugin.
  */
 require_once BN_CALENDAR_DIR . 'includes/class-bn-settings.php';
+require_once BN_CALENDAR_DIR . 'includes/class-bn-ics-proxy.php';
 require_once BN_CALENDAR_DIR . 'includes/class-bn-shortcode.php';
 
 /**
@@ -58,6 +58,7 @@ add_action( 'plugins_loaded', 'bn_calendar_load_textdomain' );
  */
 function bn_calendar_init() {
 	new BN_Settings();
+	new BN_Ics_Proxy();
 	new BN_Shortcode();
 }
 add_action( 'init', 'bn_calendar_init' );
@@ -67,8 +68,7 @@ add_action( 'init', 'bn_calendar_init' );
  */
 function bn_calendar_activate() {
 	$defaults = array(
-		'api_key'            => '',
-		'calendar_id'        => '',
+		'ics_url'            => '',
 		'slot_min_time'      => '08:00',
 		'slot_max_time'      => '23:00',
 		'mobile_default_view' => 'liste',

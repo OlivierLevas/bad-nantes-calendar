@@ -34,8 +34,7 @@ class BN_Settings {
 	 */
 	public static function get_options() {
 		$defaults = array(
-			'api_key'             => '',
-			'calendar_id'         => '',
+			'ics_url'             => '',
 			'slot_min_time'       => '08:00',
 			'slot_max_time'       => '23:00',
 			'mobile_default_view' => 'liste',
@@ -73,23 +72,15 @@ class BN_Settings {
 
 		add_settings_section(
 			'bn_calendar_main_section',
-			__( 'Configuration de l\'agenda Google', 'bad-nantes-calendar' ),
+			__( "Configuration du flux d'agenda (ICS)", 'bad-nantes-calendar' ),
 			array( $this, 'render_section_intro' ),
 			'bn-calendar'
 		);
 
 		add_settings_field(
-			'api_key',
-			__( 'Clé API Google', 'bad-nantes-calendar' ),
-			array( $this, 'render_api_key_field' ),
-			'bn-calendar',
-			'bn_calendar_main_section'
-		);
-
-		add_settings_field(
-			'calendar_id',
-			__( 'ID de l\'agenda Google', 'bad-nantes-calendar' ),
-			array( $this, 'render_calendar_id_field' ),
+			'ics_url',
+			__( "URL du flux ICS", 'bad-nantes-calendar' ),
+			array( $this, 'render_ics_url_field' ),
 			'bn-calendar',
 			'bn_calendar_main_section'
 		);
@@ -128,12 +119,13 @@ class BN_Settings {
 	public function sanitize_options( $input ) {
 		$output = self::get_options();
 
-		if ( isset( $input['api_key'] ) ) {
-			$output['api_key'] = sanitize_text_field( $input['api_key'] );
-		}
+		if ( isset( $input['ics_url'] ) ) {
+			$url = esc_url_raw( trim( $input['ics_url'] ), array( 'http', 'https', 'webcal' ) );
+			// webcal:// est un alias : on le normalise en https:// (le fetch serveur ne gère que http/https).
+			$output['ics_url'] = preg_replace( '#^webcal://#i', 'https://', $url );
 
-		if ( isset( $input['calendar_id'] ) ) {
-			$output['calendar_id'] = sanitize_text_field( $input['calendar_id'] );
+			// L'URL a changé : on purge le cache du proxy.
+			delete_transient( BN_Ics_Proxy::TRANSIENT_KEY );
 		}
 
 		if ( isset( $input['slot_min_time'] ) ) {
@@ -171,33 +163,20 @@ class BN_Settings {
 	 * Texte d'introduction de la section.
 	 */
 	public function render_section_intro() {
-		echo '<p>' . esc_html__( "Renseignez la clé API Google et l'ID de l'agenda public. Consultez le README pour créer la clé et restreindre son usage.", 'bad-nantes-calendar' ) . '</p>';
+		echo '<p>' . esc_html__( "Collez l'URL publique du flux iCal (ICS) de votre agenda. Aucune clé API n'est nécessaire. Consultez le README pour trouver cette URL (Google, Outlook, Nextcloud…).", 'bad-nantes-calendar' ) . '</p>';
 	}
 
 	/**
-	 * Champ clé API.
+	 * Champ URL du flux ICS.
 	 */
-	public function render_api_key_field() {
+	public function render_ics_url_field() {
 		$options = self::get_options();
 		printf(
-			'<input type="text" name="%1$s[api_key]" id="bn_api_key" value="%2$s" class="regular-text" autocomplete="off" />',
+			'<input type="url" name="%1$s[ics_url]" id="bn_ics_url" value="%2$s" class="large-text" placeholder="https://calendar.google.com/calendar/ical/.../public/basic.ics" autocomplete="off" />',
 			esc_attr( self::OPTION_NAME ),
-			esc_attr( $options['api_key'] )
+			esc_attr( $options['ics_url'] )
 		);
-		echo '<p class="description">' . esc_html__( 'Clé API du projet Google Cloud (API Calendar activée).', 'bad-nantes-calendar' ) . '</p>';
-	}
-
-	/**
-	 * Champ ID d'agenda.
-	 */
-	public function render_calendar_id_field() {
-		$options = self::get_options();
-		printf(
-			'<input type="text" name="%1$s[calendar_id]" id="bn_calendar_id" value="%2$s" class="regular-text" autocomplete="off" />',
-			esc_attr( self::OPTION_NAME ),
-			esc_attr( $options['calendar_id'] )
-		);
-		echo '<p class="description">' . esc_html__( 'Exemple : xxxx@group.calendar.google.com', 'bad-nantes-calendar' ) . '</p>';
+		echo '<p class="description">' . esc_html__( "Le flux doit être public. Il est récupéré côté serveur (avec cache) : pas de problème de CORS.", 'bad-nantes-calendar' ) . '</p>';
 	}
 
 	/**

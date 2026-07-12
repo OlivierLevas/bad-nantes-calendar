@@ -16,32 +16,35 @@ CDN au moment de l'exécution.
    installez-le depuis **Extensions → Ajouter → Téléverser une extension**.
 2. Activez le plugin.
 3. Allez dans **Réglages → Bad'Nantes Calendar** et renseignez :
-   - **Clé API Google**
-   - **ID de l'agenda Google**
+   - **URL du flux ICS** (agenda public au format iCal)
    - **Heure de début / de fin** de la vue semaine (défaut 08:00 / 23:00)
    - **Vue par défaut sur mobile** (liste ou mois)
 
-> La clé API n'est **jamais** stockée dans le dépôt Git : elle vit uniquement
-> dans les options WordPress, saisie via la page de réglages.
+> **Aucune clé API n'est nécessaire.** Le plugin lit un flux **ICS public**.
+> Le flux est récupéré **côté serveur** par un petit proxy PHP (avec cache de
+> 15 min), ce qui évite les problèmes de CORS des flux publics (Google, etc.)
+> et n'expose aucune donnée sensible.
 
-### Rendre l'agenda Google public
+### Où trouver l'URL du flux ICS ?
 
+Le plugin fonctionne avec n'importe quel agenda exposant un flux iCal public.
+
+**Google Agenda :**
 1. Ouvrez [Google Agenda](https://calendar.google.com/).
-2. Paramètres de l'agenda concerné → **Autorisations d'accès aux événements**.
-3. Cochez **« Rendre disponible publiquement »**.
-4. Récupérez l'**ID de l'agenda** dans la section *Intégrer l'agenda*
-   (format `xxxx@group.calendar.google.com`).
+2. Paramètres de l'agenda concerné → **Autorisations d'accès aux événements**
+   → cochez **« Rendre disponible publiquement »**.
+3. Toujours dans les paramètres, section **Intégrer l'agenda** → copiez
+   l'**Adresse publique au format iCal** (URL se terminant par
+   `.../public/basic.ics`).
 
-### Créer et restreindre la clé API (Google Cloud Console)
+**Outlook / Office 365 :** *Paramètres → Calendrier → Calendriers partagés →
+Publier* → copiez le lien **ICS**.
 
-1. Ouvrez la [Google Cloud Console](https://console.cloud.google.com/).
-2. Créez (ou choisissez) un projet.
-3. **API et services → Bibliothèque** → activez **Google Calendar API**.
-4. **API et services → Identifiants → Créer des identifiants → Clé API**.
-5. Restreignez la clé (recommandé) :
-   - **Restrictions relatives aux API** → limitez à **Google Calendar API**.
-   - **Restrictions liées aux applications** → **Référents HTTP (sites web)**
-     et ajoutez votre domaine (ex. `https://www.bad-nantes.fr/*`).
+**Nextcloud / Framagenda :** menu de l'agenda → **Lien de partage** →
+**S'abonner via un lien** (`.ics`).
+
+Collez cette URL dans le champ **URL du flux ICS** des réglages. Elle peut
+aussi commencer par `webcal://` (normalisée automatiquement en `https://`).
 
 ---
 
@@ -77,11 +80,13 @@ bad-nantes-calendar/
   bad-nantes-calendar.php        # fichier principal (en-tête + logique)
   includes/
     class-bn-settings.php        # page de réglages (Settings API)
+    class-bn-ics-proxy.php       # proxy ICS serveur (fetch + cache, anti-CORS)
     class-bn-shortcode.php       # rendu + enqueue conditionnel
   assets/
     css/bn-calendar.css          # charte Bad'Nantes
-    js/bn-init.js                # init FullCalendar
-    vendor/fullcalendar/         # FullCalendar 6 local
+    js/bn-init.js                # init FullCalendar (source iCalendar)
+    vendor/fullcalendar/         # FullCalendar 6 + connecteur iCalendar + locale fr
+    vendor/ical/                 # ical.js (parseur iCal : RRULE, fuseaux)
   lib/plugin-update-checker/     # mises à jour GitHub (Yahnis Elsts)
   languages/                     # i18n (.pot)
 ```

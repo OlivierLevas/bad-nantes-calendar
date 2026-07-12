@@ -33,6 +33,7 @@ class BN_Shortcode {
 	 * Déclare (sans enfiler) les assets. L'enqueue réel se fait dans render().
 	 */
 	public function register_assets() {
+		// Coeur FullCalendar (bundle standard, sans connecteurs).
 		wp_register_script(
 			'bn-fullcalendar',
 			BN_CALENDAR_URL . 'assets/vendor/fullcalendar/index.global.min.js',
@@ -41,10 +42,37 @@ class BN_Shortcode {
 			true
 		);
 
+		// Locale française (enregistrée dans FullCalendar.globalLocales).
+		wp_register_script(
+			'bn-fc-locale-fr',
+			BN_CALENDAR_URL . 'assets/vendor/fullcalendar/locales-fr.global.min.js',
+			array( 'bn-fullcalendar' ),
+			'6.1.11',
+			true
+		);
+
+		// ical.js : parseur iCal (fournit le global ICAL, gère RRULE/fuseaux).
+		wp_register_script(
+			'bn-ical',
+			BN_CALENDAR_URL . 'assets/vendor/ical/ical.min.js',
+			array(),
+			'1.5.0',
+			true
+		);
+
+		// Connecteur iCalendar de FullCalendar (dépend du coeur + ICAL).
+		wp_register_script(
+			'bn-fc-icalendar',
+			BN_CALENDAR_URL . 'assets/vendor/fullcalendar/icalendar.global.min.js',
+			array( 'bn-fullcalendar', 'bn-ical' ),
+			'6.1.11',
+			true
+		);
+
 		wp_register_script(
 			'bn-init',
 			BN_CALENDAR_URL . 'assets/js/bn-init.js',
-			array( 'bn-fullcalendar' ),
+			array( 'bn-fc-icalendar', 'bn-fc-locale-fr' ),
 			BN_CALENDAR_VERSION,
 			true
 		);
@@ -85,15 +113,15 @@ class BN_Shortcode {
 		$mobile_view = ( 'mois' === $options['mobile_default_view'] ) ? 'dayGridMonth' : 'listWeek';
 
 		// Enqueue conditionnel : seulement quand le shortcode est effectivement rendu.
+		// bn-init tire ses dépendances (coeur, ical, connecteur, locale) via wp_register_script.
 		wp_enqueue_style( 'bn-calendar' );
-		wp_enqueue_script( 'bn-fullcalendar' );
 		wp_enqueue_script( 'bn-init' );
 
-		// Configuration transmise au JS (jamais de clé en dur côté JS).
+		// Configuration transmise au JS (aucune donnée sensible : le flux est public).
 		$config = array(
 			'containerId'  => $container_id,
-			'apiKey'       => $options['api_key'],
-			'calendarId'   => $options['calendar_id'],
+			'icsUrl'       => BN_Ics_Proxy::get_proxy_url(),
+			'configured'   => ! empty( $options['ics_url'] ),
 			'initialView'  => $initial_view,
 			'mobileView'   => $mobile_view,
 			'slotMinTime'  => $options['slot_min_time'] . ':00',
@@ -102,7 +130,7 @@ class BN_Shortcode {
 			'locale'       => 'fr',
 			'mobileBreakpoint' => 600,
 			'i18n'         => array(
-				'missingConfig' => __( "Agenda non configuré : renseignez la clé API et l'ID d'agenda dans les réglages.", 'bad-nantes-calendar' ),
+				'missingConfig' => __( "Agenda non configuré : renseignez l'URL du flux ICS dans les réglages.", 'bad-nantes-calendar' ),
 			),
 		);
 
