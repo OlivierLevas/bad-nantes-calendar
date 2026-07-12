@@ -75,7 +75,7 @@
 	background-color: var(--bn-vert-fonce);
 	border-color: var(--bn-vert-fonce);
 	color: var(--bn-citron);
-	border-radius: var(--bn-radius);
+	border-radius: 0;
 }
 
 .bn-calendar .fc-event-title,
@@ -88,6 +88,13 @@
 .bn-calendar .fc-event:nth-of-type(even) .fc-event-main {
 	background-color: var(--bn-vert-clair);
 	border-color: var(--bn-vert-clair);
+}
+
+/* Événements daygrid (mois/semaine) : pas de marge autour. !important requis pour
+   battre les défauts FullCalendar (.fc-direction-ltr .fc-daygrid-event.fc-event-start,
+   spécificité plus forte + injectés au runtime). */
+.bn-calendar .fc-daygrid-event {
+	margin: 0 !important;
 }
 
 /* Contenu personnalisé des pastilles (heure début–fin, titre, bloc lieu) */
@@ -126,12 +133,6 @@
 /* Bouton icône du bloc lieu : léger décalage vertical pour l'aligner avec l'adresse. */
 .bn-calendar .bn-event-location .wp-block-button {
 	margin-top: var(--wp--preset--spacing--20);
-}
-
-/* Annule le fond base forcé (!important) par la classe de bloc has-base-background-color
-   à l'intérieur du calendrier, pour laisser apparaître le fond accent-1 du .bn-event. */
-.bn-calendar .has-base-background-color {
-	background-color: transparent !important;
 }
 
 /* Liens du bloc lieu : lisibles sur fond vert foncé */
