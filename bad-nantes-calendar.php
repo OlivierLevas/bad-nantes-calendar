@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Bad'Nantes Calendar
- * Plugin URI:        https://github.com/olivierlev/bad-nantes-calendar
+ * Plugin URI:        https://github.com/OlivierLevas/bad-nantes-calendar
  * Description:        Affiche l'agenda Google public du club Bad'Nantes via FullCalendar 6, en vue semaine (grille horaire) ou vue mois. FullCalendar est embarqué en local, pas de CDN.
  * Version:           1.0.0
  * Requires at least: 5.8
@@ -32,7 +32,7 @@ define( 'BN_CALENDAR_URL', plugin_dir_url( __FILE__ ) );
  * URL du dépôt GitHub utilisée par Plugin Update Checker pour les mises à jour.
  *
  */
-define( 'BN_CALENDAR_GITHUB_URL', 'https://github.com/olivierlev/bad-nantes-calendar/' );
+define( 'BN_CALENDAR_GITHUB_URL', 'https://github.com/OlivierLevas/bad-nantes-calendar/' );
 
 /**
  * Charge les classes du plugin.
