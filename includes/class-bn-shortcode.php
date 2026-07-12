@@ -119,6 +119,18 @@ class BN_Shortcode {
 		wp_enqueue_style( 'bn-calendar' );
 		wp_enqueue_script( 'bn-init' );
 
+		// Table lieu -> HTML : on abaisse la casse du repère pour un test insensible côté JS.
+		$locations = array();
+		foreach ( (array) $options['locations'] as $loc ) {
+			if ( '' === $loc['match'] ) {
+				continue;
+			}
+			$locations[] = array(
+				'match' => function_exists( 'mb_strtolower' ) ? mb_strtolower( $loc['match'] ) : strtolower( $loc['match'] ),
+				'html'  => $loc['html'],
+			);
+		}
+
 		// Configuration transmise au JS (aucune donnée sensible : le flux est public).
 		$config = array(
 			'containerId'  => $container_id,
@@ -129,6 +141,7 @@ class BN_Shortcode {
 			'firstDay'     => 1,
 			'locale'       => 'fr',
 			'mobileBreakpoint' => 600,
+			'locationHtml' => $locations,
 			'i18n'         => array(
 				'missingConfig' => __( "Agenda non configuré : renseignez l'URL du flux ICS dans les réglages.", 'bad-nantes-calendar' ),
 			),

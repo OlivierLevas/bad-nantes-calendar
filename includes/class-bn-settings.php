@@ -25,6 +25,25 @@ class BN_Settings {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
+	}
+
+	/**
+	 * Charge le petit script du répéteur « Lieu → HTML », seulement sur notre page.
+	 *
+	 * @param string $hook_suffix Identifiant de la page admin courante.
+	 */
+	public function enqueue_admin_assets( $hook_suffix ) {
+		if ( 'settings_page_bn-calendar' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_script(
+			'bn-admin',
+			BN_CALENDAR_URL . 'assets/js/bn-admin.js',
+			array(),
+			BN_CALENDAR_VERSION,
+			true
+		);
 	}
 
 	/**
@@ -36,6 +55,7 @@ class BN_Settings {
 		$defaults = array(
 			'ics_url'             => '',
 			'mobile_default_view' => 'liste',
+			'locations'           => array(), // Liste de tableaux : array( 'match' => 'texte', 'html' => '<p>…</p>' ).
 		);
 
 		return wp_parse_args( get_option( self::OPTION_NAME, array() ), $defaults );
@@ -90,6 +110,22 @@ class BN_Settings {
 			'bn-calendar',
 			'bn_calendar_main_section'
 		);
+
+		// Section dédiée aux contenus HTML par lieu.
+		add_settings_section(
+			'bn_calendar_locations_section',
+			__( 'Contenu HTML par lieu', 'bad-nantes-calendar' ),
+			array( $this, 'render_locations_intro' ),
+			'bn-calendar'
+		);
+
+		add_settings_field(
+			'locations',
+			__( 'Lieux', 'bad-nantes-calendar' ),
+			array( $this, 'render_locations_field' ),
+			'bn-calendar',
+			'bn_calendar_locations_section'
+		);
 	}
 
 	/**
@@ -115,6 +151,28 @@ class BN_Settings {
 			$output['mobile_default_view'] = in_array( $view, array( 'liste', 'mois' ), true ) ? $view : 'liste';
 		}
 
+		// Lieux : tableaux parallèles match[] / html[] issus du répéteur.
+		$locations = array();
+		if ( isset( $input['locations']['match'] ) && is_array( $input['locations']['match'] ) ) {
+			$matches = $input['locations']['match'];
+			$htmls   = isset( $input['locations']['html'] ) && is_array( $input['locations']['html'] ) ? $input['locations']['html'] : array();
+
+			foreach ( $matches as $i => $raw_match ) {
+				$match = sanitize_text_field( $raw_match );
+				$html  = isset( $htmls[ $i ] ) ? wp_kses_post( $htmls[ $i ] ) : '';
+
+				// On ignore les lignes totalement vides.
+				if ( '' === $match && '' === $html ) {
+					continue;
+				}
+				$locations[] = array(
+					'match' => $match,
+					'html'  => $html,
+				);
+			}
+		}
+		$output['locations'] = $locations;
+
 		return $output;
 	}
 
@@ -136,6 +194,63 @@ class BN_Settings {
 			esc_attr( $options['ics_url'] )
 		);
 		echo '<p class="description">' . esc_html__( "Le flux doit être public. Il est récupéré côté serveur (avec cache) : pas de problème de CORS.", 'bad-nantes-calendar' ) . '</p>';
+	}
+
+	/**
+	 * Introduction de la section « Contenu HTML par lieu ».
+	 */
+	public function render_locations_intro() {
+		echo '<p>' . esc_html__( "Associez un contenu HTML à un lieu. Il s'affiche sous le titre de l'événement quand le champ « Lieu » de l'agenda contient le texte indiqué (insensible à la casse). Laissez vide si vous n'en avez pas besoin.", 'bad-nantes-calendar' ) . '</p>';
+	}
+
+	/**
+	 * Répéteur « Lieu → contenu HTML ».
+	 */
+	public function render_locations_field() {
+		$options   = self::get_options();
+		$locations = ! empty( $options['locations'] ) ? $options['locations'] : array( array( 'match' => '', 'html' => '' ) );
+
+		echo '<div id="bn-locations-repeater">';
+		foreach ( $locations as $loc ) {
+			$this->render_location_row( $loc['match'], $loc['html'] );
+		}
+		echo '</div>';
+
+		echo '<p><button type="button" class="button" id="bn-add-location">' . esc_html__( '+ Ajouter un lieu', 'bad-nantes-calendar' ) . '</button></p>';
+
+		// Modèle de ligne vierge cloné par le JS admin.
+		echo '<template id="bn-location-row-template">';
+		$this->render_location_row( '', '' );
+		echo '</template>';
+	}
+
+	/**
+	 * Affiche une ligne du répéteur (champ texte « Lieu » + zone HTML).
+	 *
+	 * @param string $match Texte à repérer dans le lieu de l'événement.
+	 * @param string $html  Contenu HTML associé.
+	 */
+	private function render_location_row( $match, $html ) {
+		$name = self::OPTION_NAME;
+		?>
+		<div class="bn-location-row" style="margin-bottom:1em;padding:1em;border:1px solid #dcdcde;background:#fff;max-width:600px;">
+			<p style="margin-top:0;">
+				<label>
+					<strong><?php esc_html_e( 'Lieu (texte à repérer)', 'bad-nantes-calendar' ); ?></strong><br />
+					<input type="text" name="<?php echo esc_attr( $name ); ?>[locations][match][]" value="<?php echo esc_attr( $match ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Ex. : Dervallières', 'bad-nantes-calendar' ); ?>" />
+				</label>
+			</p>
+			<p style="margin-bottom:0;">
+				<label>
+					<strong><?php esc_html_e( 'Contenu HTML', 'bad-nantes-calendar' ); ?></strong><br />
+					<textarea name="<?php echo esc_attr( $name ); ?>[locations][html][]" rows="3" class="large-text" placeholder="&lt;a href=&quot;...&quot;&gt;Voir le plan&lt;/a&gt;"><?php echo esc_textarea( $html ); ?></textarea>
+				</label>
+			</p>
+			<p style="margin-bottom:0;">
+				<button type="button" class="button-link bn-remove-location" style="color:#b32d2e;"><?php esc_html_e( 'Supprimer ce lieu', 'bad-nantes-calendar' ); ?></button>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**

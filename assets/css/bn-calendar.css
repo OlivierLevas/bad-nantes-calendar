@@ -84,6 +84,50 @@
 	border-color: var(--bn-vert-clair);
 }
 
+/* Contenu personnalisé des pastilles (heure début–fin, titre, bloc lieu) */
+.bn-calendar .bn-event {
+	padding: 2px 4px;
+	line-height: 1.25;
+}
+
+.bn-calendar .bn-event-time {
+	font-weight: 700;
+	font-size: 0.85em;
+}
+
+.bn-calendar .bn-event-title {
+	font-weight: 600;
+}
+
+.bn-calendar .bn-event-location {
+	margin-top: 2px;
+	font-size: 0.85em;
+	opacity: 0.95;
+}
+
+/* Liens du bloc lieu : lisibles sur fond vert foncé */
+.bn-calendar .bn-event-location a {
+	color: var(--bn-citron);
+	text-decoration: underline;
+}
+
+.bn-calendar .bn-event-location img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 3px;
+}
+
+/* En vue liste, le fond est clair : on repasse en vert foncé pour la lisibilité */
+.bn-calendar .fc-list-event .bn-event-time,
+.bn-calendar .fc-list-event .bn-event-title,
+.bn-calendar .fc-list-event .bn-event-location {
+	color: var(--bn-vert-fonce);
+}
+
+.bn-calendar .fc-list-event .bn-event-location a {
+	color: var(--bn-vert-clair);
+}
+
 /* Titre du calendrier */
 .bn-calendar .fc-toolbar-title {
 	color: var(--bn-vert-fonce);

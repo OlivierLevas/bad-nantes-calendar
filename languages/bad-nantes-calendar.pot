@@ -58,6 +58,38 @@ msgstr ""
 msgid "Insérez un des shortcodes suivants dans une page ou un article :"
 msgstr ""
 
+#: includes/class-bn-settings.php
+msgid "Contenu HTML par lieu"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Lieux"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Associez un contenu HTML à un lieu. Il s'affiche sous le titre de l'événement quand le champ « Lieu » de l'agenda contient le texte indiqué (insensible à la casse). Laissez vide si vous n'en avez pas besoin."
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "+ Ajouter un lieu"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Lieu (texte à repérer)"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Ex. : Dervallières"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Contenu HTML"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Supprimer ce lieu"
+msgstr ""
+
 #: includes/class-bn-shortcode.php
 msgid "Agenda non configuré : renseignez l'URL du flux ICS dans les réglages."
 msgstr ""

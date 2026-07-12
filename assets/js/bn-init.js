@@ -23,6 +23,66 @@
 	}
 
 	/**
+	 * Retourne le contenu HTML configuré pour le lieu d'un événement, ou une
+	 * chaîne vide. La comparaison est insensible à la casse : on cherche le
+	 * texte « match » (déjà en minuscules) dans le lieu de l'événement.
+	 *
+	 * @param {string} location Lieu de l'événement (extendedProps.location).
+	 * @param {Array}  entries  Table [{ match, html }] issue des réglages.
+	 * @return {string} HTML ou ''.
+	 */
+	function locationHtmlFor(location, entries) {
+		if (!location || !entries || !entries.length) {
+			return '';
+		}
+		var haystack = location.toLowerCase();
+		for (var i = 0; i < entries.length; i++) {
+			if (entries[i].match && haystack.indexOf(entries[i].match) !== -1) {
+				return entries[i].html || '';
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * Construit le contenu d'une pastille d'événement : heure, titre, puis le
+	 * bloc HTML associé au lieu (si configuré).
+	 *
+	 * @param {Object} arg    Argument fourni par FullCalendar (event, timeText).
+	 * @param {Object} config Configuration de l'instance.
+	 * @return {HTMLElement}
+	 */
+	function buildEventNode(arg, config) {
+		var wrap = document.createElement('div');
+		wrap.className = 'bn-event';
+
+		// Heure début–fin (vide pour les événements « toute la journée »).
+		if (arg.timeText) {
+			var time = document.createElement('div');
+			time.className = 'bn-event-time';
+			time.textContent = arg.timeText;
+			wrap.appendChild(time);
+		}
+
+		// Titre (texte échappé automatiquement via textContent).
+		var title = document.createElement('div');
+		title.className = 'bn-event-title';
+		title.textContent = arg.event.title;
+		wrap.appendChild(title);
+
+		// Contenu HTML du lieu. Source : réglages admin, assainie par wp_kses_post.
+		var html = locationHtmlFor(arg.event.extendedProps.location, config.locationHtml);
+		if (html) {
+			var loc = document.createElement('div');
+			loc.className = 'bn-event-location';
+			loc.innerHTML = html;
+			wrap.appendChild(loc);
+		}
+
+		return wrap;
+	}
+
+	/**
 	 * Initialise un conteneur de calendrier.
 	 *
 	 * @param {HTMLElement} el Élément conteneur.
@@ -58,6 +118,13 @@
 			nowIndicator: true,
 			// Un événement peut porter un lien (propriété URL de l'ICS) : bloc cliquable.
 			eventDisplay: 'block',
+			// Affiche l'heure de fin en plus de l'heure de début (format 24h).
+			displayEventEnd: true,
+			eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+			// Rendu personnalisé : heure début–fin, titre, puis contenu HTML du lieu.
+			eventContent: function (arg) {
+				return { domNodes: [buildEventNode(arg, config)] };
+			},
 			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',

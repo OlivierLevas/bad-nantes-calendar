@@ -4,7 +4,7 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,11 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.0.4 =
+* Événements : affichage de l'heure de fin en plus de l'heure de début.
+* Nouveau réglage « Contenu HTML par lieu » : associez un bloc HTML à un lieu ;
+  il s'affiche sous le titre de l'événement quand le lieu correspond.
 
 = 1.0.3 =
 * Réglages : suppression des champs « Heure de début / de fin (vue semaine) »,
