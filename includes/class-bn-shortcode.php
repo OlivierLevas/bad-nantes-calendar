@@ -126,8 +126,6 @@ class BN_Shortcode {
 			'configured'   => ! empty( $options['ics_url'] ),
 			'initialView'  => $initial_view,
 			'mobileView'   => $mobile_view,
-			'slotMinTime'  => $options['slot_min_time'] . ':00',
-			'slotMaxTime'  => $options['slot_max_time'] . ':00',
 			'firstDay'     => 1,
 			'locale'       => 'fr',
 			'mobileBreakpoint' => 600,

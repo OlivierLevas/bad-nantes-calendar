@@ -35,8 +35,6 @@ class BN_Settings {
 	public static function get_options() {
 		$defaults = array(
 			'ics_url'             => '',
-			'slot_min_time'       => '08:00',
-			'slot_max_time'       => '23:00',
 			'mobile_default_view' => 'liste',
 		);
 
@@ -86,22 +84,6 @@ class BN_Settings {
 		);
 
 		add_settings_field(
-			'slot_min_time',
-			__( 'Heure de début (vue semaine)', 'bad-nantes-calendar' ),
-			array( $this, 'render_slot_min_field' ),
-			'bn-calendar',
-			'bn_calendar_main_section'
-		);
-
-		add_settings_field(
-			'slot_max_time',
-			__( 'Heure de fin (vue semaine)', 'bad-nantes-calendar' ),
-			array( $this, 'render_slot_max_field' ),
-			'bn-calendar',
-			'bn_calendar_main_section'
-		);
-
-		add_settings_field(
 			'mobile_default_view',
 			__( 'Vue par défaut sur mobile', 'bad-nantes-calendar' ),
 			array( $this, 'render_mobile_view_field' ),
@@ -128,35 +110,12 @@ class BN_Settings {
 			delete_transient( BN_Ics_Proxy::TRANSIENT_KEY );
 		}
 
-		if ( isset( $input['slot_min_time'] ) ) {
-			$output['slot_min_time'] = $this->sanitize_time( $input['slot_min_time'], '08:00' );
-		}
-
-		if ( isset( $input['slot_max_time'] ) ) {
-			$output['slot_max_time'] = $this->sanitize_time( $input['slot_max_time'], '23:00' );
-		}
-
 		if ( isset( $input['mobile_default_view'] ) ) {
 			$view = sanitize_text_field( $input['mobile_default_view'] );
 			$output['mobile_default_view'] = in_array( $view, array( 'liste', 'mois' ), true ) ? $view : 'liste';
 		}
 
 		return $output;
-	}
-
-	/**
-	 * Valide un champ horaire au format HH:MM, sinon retourne la valeur par défaut.
-	 *
-	 * @param string $value    Valeur brute.
-	 * @param string $fallback Valeur de repli.
-	 * @return string
-	 */
-	private function sanitize_time( $value, $fallback ) {
-		$value = sanitize_text_field( $value );
-		if ( preg_match( '/^([01]\d|2[0-3]):[0-5]\d$/', $value ) ) {
-			return $value;
-		}
-		return $fallback;
 	}
 
 	/**
@@ -177,30 +136,6 @@ class BN_Settings {
 			esc_attr( $options['ics_url'] )
 		);
 		echo '<p class="description">' . esc_html__( "Le flux doit être public. Il est récupéré côté serveur (avec cache) : pas de problème de CORS.", 'bad-nantes-calendar' ) . '</p>';
-	}
-
-	/**
-	 * Champ heure de début.
-	 */
-	public function render_slot_min_field() {
-		$options = self::get_options();
-		printf(
-			'<input type="time" name="%1$s[slot_min_time]" id="bn_slot_min_time" value="%2$s" />',
-			esc_attr( self::OPTION_NAME ),
-			esc_attr( $options['slot_min_time'] )
-		);
-	}
-
-	/**
-	 * Champ heure de fin.
-	 */
-	public function render_slot_max_field() {
-		$options = self::get_options();
-		printf(
-			'<input type="time" name="%1$s[slot_max_time]" id="bn_slot_max_time" value="%2$s" />',
-			esc_attr( self::OPTION_NAME ),
-			esc_attr( $options['slot_max_time'] )
-		);
 	}
 
 	/**

@@ -4,7 +4,7 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,7 +35,7 @@ Caractéristiques :
 1. Installez le plugin (zip) puis activez-le.
 2. Rendez-vous dans « Réglages → Bad'Nantes Calendar ».
 3. Collez l'URL du flux ICS public de votre agenda.
-4. Réglez les heures de début/fin de la vue semaine et la vue mobile par défaut.
+4. Réglez la vue par défaut sur mobile.
 5. Insérez un shortcode dans une page :
    `[bn_calendar view="mois"]` ou `[bn_calendar view="semaine"]`.
 
@@ -65,6 +65,10 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.0.3 =
+* Réglages : suppression des champs « Heure de début / de fin (vue semaine) »,
+  devenus inutiles depuis le passage de la vue semaine en dayGridWeek.
 
 = 1.0.2 =
 * Vue semaine : passage en dayGridWeek (7 colonnes, une par jour, événements

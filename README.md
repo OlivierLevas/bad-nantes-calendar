@@ -17,7 +17,6 @@ CDN au moment de l'exécution.
 2. Activez le plugin.
 3. Allez dans **Réglages → Bad'Nantes Calendar** et renseignez :
    - **URL du flux ICS** (agenda public au format iCal)
-   - **Heure de début / de fin** de la vue semaine (défaut 08:00 / 23:00)
    - **Vue par défaut sur mobile** (liste ou mois)
 
 > **Aucune clé API n'est nécessaire.** Le plugin lit un flux **ICS public**.

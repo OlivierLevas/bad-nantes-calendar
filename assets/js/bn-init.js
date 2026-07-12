@@ -54,8 +54,6 @@
 			initialView: currentView,
 			firstDay: config.firstDay,
 			locale: config.locale,
-			slotMinTime: config.slotMinTime,
-			slotMaxTime: config.slotMaxTime,
 			height: 'auto',
 			nowIndicator: true,
 			// Un événement peut porter un lien (propriété URL de l'ICS) : bloc cliquable.

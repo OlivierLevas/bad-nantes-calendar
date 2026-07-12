@@ -27,14 +27,6 @@ msgid "URL du flux ICS"
 msgstr ""
 
 #: includes/class-bn-settings.php
-msgid "Heure de début (vue semaine)"
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "Heure de fin (vue semaine)"
-msgstr ""
-
-#: includes/class-bn-settings.php
 msgid "Vue par défaut sur mobile"
 msgstr ""
 
