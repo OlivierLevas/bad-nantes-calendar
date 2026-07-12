@@ -60,7 +60,7 @@
 }
 
 .bn-calendar .fc-day-today .fc-daygrid-day-number {
-	color: var(--bn-vert-fonce);
+	color: var(--wp--preset--color--base, var(--bn-vert-fonce));
 }
 
 /* Événements */
@@ -88,6 +88,10 @@
 .bn-calendar .bn-event {
 	padding: 2px 4px;
 	line-height: 1.25;
+	/* Fond = couleur accent-1 du thème (fallback vert club si le preset est absent). */
+	background-color: var(--wp--preset--color--accent-1, var(--bn-vert-fonce));
+	/* Texte = couleur base du thème (fallback texte clair). */
+	color: var(--wp--preset--color--base, var(--bn-texte-clair));
 }
 
 .bn-calendar .bn-event-time {

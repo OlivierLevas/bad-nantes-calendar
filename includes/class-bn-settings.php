@@ -171,11 +171,14 @@ class BN_Settings {
 			$output['mobile_default_view'] = in_array( $view, array( 'liste', 'mois' ), true ) ? $view : 'liste';
 		}
 
-		// Gabarit HTML : stocké brut (accès réservé à manage_options). Il est assaini
-		// par wp_kses_post au rendu, APRÈS substitution des variables, pour ne pas
-		// casser le href="{{lien}}" (kses supprimerait un placeholder invalide comme URL).
+		// Gabarit HTML : même sémantique que le contenu d'article (post_content). Un
+		// auteur disposant de la capacité unfiltered_html (admin sur site simple) peut
+		// enregistrer du HTML riche — blocs Gutenberg, SVG inline… ; sinon on assainit
+		// dès la sauvegarde (wp_kses_post retirerait le SVG). Le rendu ne re-filtre pas :
+		// la confiance est décidée ici, selon la capacité de l'auteur.
 		if ( isset( $input['location_template'] ) ) {
-			$output['location_template'] = trim( $input['location_template'] );
+			$template                    = trim( $input['location_template'] );
+			$output['location_template'] = current_user_can( 'unfiltered_html' ) ? $template : wp_kses_post( $template );
 		}
 
 		// Lieux : tableaux parallèles match[] / nom[] / adresse[] / lien[] issus du répéteur.

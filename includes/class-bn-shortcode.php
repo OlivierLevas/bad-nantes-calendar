@@ -120,7 +120,9 @@ class BN_Shortcode {
 		wp_enqueue_script( 'bn-init' );
 
 		// Table lieu -> HTML : le HTML est produit ici à partir du gabarit commun, en
-		// substituant les variables du lieu (échappées), puis assaini par wp_kses_post.
+		// substituant les variables du lieu (échappées : esc_html / esc_url). Le gabarit
+		// lui-même est déjà de confiance (vérifié à la sauvegarde selon unfiltered_html),
+		// donc on ne le re-filtre pas au rendu — ce qui préserve SVG inline, var() CSS, etc.
 		// On abaisse la casse du repère pour un test insensible côté JS.
 		$template  = isset( $options['location_template'] ) ? $options['location_template'] : '';
 		$locations = array();
@@ -148,12 +150,10 @@ class BN_Shortcode {
 					)
 				);
 				// Lien Maps non renseigné : on retire le lien mort (href vide) laissé par
-				// le gabarit avant l'assainissement.
+				// le gabarit — supprime aussi le bouton/icône qu'il contient.
 				if ( '' === $lien ) {
 					$html = preg_replace( '#<a\b[^>]*\bhref=(?:""|\'\')[^>]*>.*?</a>#is', '', $html );
 				}
-				// Assainissement final, après substitution : le href contient alors une vraie URL.
-				$html = wp_kses_post( $html );
 			}
 
 			$locations[] = array(
