@@ -119,15 +119,46 @@ class BN_Shortcode {
 		wp_enqueue_style( 'bn-calendar' );
 		wp_enqueue_script( 'bn-init' );
 
-		// Table lieu -> HTML : on abaisse la casse du repère pour un test insensible côté JS.
+		// Table lieu -> HTML : le HTML est produit ici à partir du gabarit commun, en
+		// substituant les variables du lieu (échappées), puis assaini par wp_kses_post.
+		// On abaisse la casse du repère pour un test insensible côté JS.
+		$template  = isset( $options['location_template'] ) ? $options['location_template'] : '';
 		$locations = array();
 		foreach ( (array) $options['locations'] as $loc ) {
-			if ( '' === $loc['match'] ) {
+			$match   = isset( $loc['match'] ) ? $loc['match'] : '';
+			$nom     = isset( $loc['nom'] ) ? $loc['nom'] : '';
+			$adresse = isset( $loc['adresse'] ) ? $loc['adresse'] : '';
+			$lien    = isset( $loc['lien'] ) ? $loc['lien'] : '';
+
+			// Sans mot-clé de repérage, ou sans aucune variable renseignée (ex. lieux
+			// hérités de la v1.0.4 : match+html mais ni nom/adresse/lien), on n'affiche
+			// rien plutôt qu'un bloc dégénéré avec un lien Maps mort.
+			if ( '' === $match || ( '' === $nom && '' === $adresse && '' === $lien ) ) {
 				continue;
 			}
+
+			$html = '';
+			if ( '' !== $template ) {
+				$html = strtr(
+					$template,
+					array(
+						'{{nom}}'     => esc_html( $nom ),
+						'{{adresse}}' => esc_html( $adresse ),
+						'{{lien}}'    => esc_url( $lien ),
+					)
+				);
+				// Lien Maps non renseigné : on retire le lien mort (href vide) laissé par
+				// le gabarit avant l'assainissement.
+				if ( '' === $lien ) {
+					$html = preg_replace( '#<a\b[^>]*\bhref=(?:""|\'\')[^>]*>.*?</a>#is', '', $html );
+				}
+				// Assainissement final, après substitution : le href contient alors une vraie URL.
+				$html = wp_kses_post( $html );
+			}
+
 			$locations[] = array(
-				'match' => function_exists( 'mb_strtolower' ) ? mb_strtolower( $loc['match'] ) : strtolower( $loc['match'] ),
-				'html'  => $loc['html'],
+				'match' => function_exists( 'mb_strtolower' ) ? mb_strtolower( $match ) : strtolower( $match ),
+				'html'  => $html,
 			);
 		}
 

@@ -55,10 +55,22 @@ class BN_Settings {
 		$defaults = array(
 			'ics_url'             => '',
 			'mobile_default_view' => 'liste',
-			'locations'           => array(), // Liste de tableaux : array( 'match' => 'texte', 'html' => '<p>…</p>' ).
+			// Gabarit HTML unique appliqué à chaque lieu (variables {{nom}} {{adresse}} {{lien}}).
+			'location_template'   => self::default_location_template(),
+			// Liste de tableaux : array( 'match' => 'texte', 'nom' => '…', 'adresse' => '…', 'lien' => 'https://…' ).
+			'locations'           => array(),
 		);
 
 		return wp_parse_args( get_option( self::OPTION_NAME, array() ), $defaults );
+	}
+
+	/**
+	 * Gabarit HTML par défaut : nom, adresse et bouton vers Google Maps.
+	 *
+	 * @return string
+	 */
+	public static function default_location_template() {
+		return "<div class=\"bn-event-place\">\n\t<strong>{{nom}}</strong><br />\n\t{{adresse}}<br />\n\t<a href=\"{{lien}}\" target=\"_blank\" rel=\"noopener\">Voir sur Google Maps</a>\n</div>";
 	}
 
 	/**
@@ -120,6 +132,14 @@ class BN_Settings {
 		);
 
 		add_settings_field(
+			'location_template',
+			__( "Gabarit d'affichage", 'bad-nantes-calendar' ),
+			array( $this, 'render_location_template_field' ),
+			'bn-calendar',
+			'bn_calendar_locations_section'
+		);
+
+		add_settings_field(
 			'locations',
 			__( 'Lieux', 'bad-nantes-calendar' ),
 			array( $this, 'render_locations_field' ),
@@ -151,23 +171,36 @@ class BN_Settings {
 			$output['mobile_default_view'] = in_array( $view, array( 'liste', 'mois' ), true ) ? $view : 'liste';
 		}
 
-		// Lieux : tableaux parallèles match[] / html[] issus du répéteur.
+		// Gabarit HTML : stocké brut (accès réservé à manage_options). Il est assaini
+		// par wp_kses_post au rendu, APRÈS substitution des variables, pour ne pas
+		// casser le href="{{lien}}" (kses supprimerait un placeholder invalide comme URL).
+		if ( isset( $input['location_template'] ) ) {
+			$output['location_template'] = trim( $input['location_template'] );
+		}
+
+		// Lieux : tableaux parallèles match[] / nom[] / adresse[] / lien[] issus du répéteur.
 		$locations = array();
 		if ( isset( $input['locations']['match'] ) && is_array( $input['locations']['match'] ) ) {
-			$matches = $input['locations']['match'];
-			$htmls   = isset( $input['locations']['html'] ) && is_array( $input['locations']['html'] ) ? $input['locations']['html'] : array();
+			$matches  = $input['locations']['match'];
+			$noms     = isset( $input['locations']['nom'] ) && is_array( $input['locations']['nom'] ) ? $input['locations']['nom'] : array();
+			$adresses = isset( $input['locations']['adresse'] ) && is_array( $input['locations']['adresse'] ) ? $input['locations']['adresse'] : array();
+			$liens    = isset( $input['locations']['lien'] ) && is_array( $input['locations']['lien'] ) ? $input['locations']['lien'] : array();
 
 			foreach ( $matches as $i => $raw_match ) {
-				$match = sanitize_text_field( $raw_match );
-				$html  = isset( $htmls[ $i ] ) ? wp_kses_post( $htmls[ $i ] ) : '';
+				$match   = sanitize_text_field( $raw_match );
+				$nom     = isset( $noms[ $i ] ) ? sanitize_text_field( $noms[ $i ] ) : '';
+				$adresse = isset( $adresses[ $i ] ) ? sanitize_text_field( $adresses[ $i ] ) : '';
+				$lien    = isset( $liens[ $i ] ) ? esc_url_raw( trim( $liens[ $i ] ) ) : '';
 
 				// On ignore les lignes totalement vides.
-				if ( '' === $match && '' === $html ) {
+				if ( '' === $match && '' === $nom && '' === $adresse && '' === $lien ) {
 					continue;
 				}
 				$locations[] = array(
-					'match' => $match,
-					'html'  => $html,
+					'match'   => $match,
+					'nom'     => $nom,
+					'adresse' => $adresse,
+					'lien'    => $lien,
 				);
 			}
 		}
@@ -200,7 +233,23 @@ class BN_Settings {
 	 * Introduction de la section « Contenu HTML par lieu ».
 	 */
 	public function render_locations_intro() {
-		echo '<p>' . esc_html__( "Associez un contenu HTML à un lieu. Il s'affiche sous le titre de l'événement quand le champ « Lieu » de l'agenda contient le texte indiqué (insensible à la casse). Laissez vide si vous n'en avez pas besoin.", 'bad-nantes-calendar' ) . '</p>';
+		echo '<p>' . esc_html__( "Le même gabarit d'affichage est appliqué à chaque lieu : vous ne saisissez que le nom, l'adresse et le lien Google Maps. Le bloc s'affiche sous le titre de l'événement quand le champ « Lieu » de l'agenda contient le mot-clé indiqué (insensible à la casse).", 'bad-nantes-calendar' ) . '</p>';
+	}
+
+	/**
+	 * Champ « Gabarit d'affichage » : HTML commun à tous les lieux.
+	 */
+	public function render_location_template_field() {
+		$options = self::get_options();
+		printf(
+			'<textarea name="%1$s[location_template]" id="bn_location_template" rows="6" class="large-text code" spellcheck="false">%2$s</textarea>',
+			esc_attr( self::OPTION_NAME ),
+			esc_textarea( $options['location_template'] )
+		);
+		echo '<p class="description">' . wp_kses(
+			__( 'Variables disponibles : <code>{{nom}}</code>, <code>{{adresse}}</code>, <code>{{lien}}</code> (URL Google Maps). Elles sont remplacées par les valeurs de chaque lieu ci-dessous.', 'bad-nantes-calendar' ),
+			array( 'code' => array() )
+		) . '</p>';
 	}
 
 	/**
@@ -208,11 +257,13 @@ class BN_Settings {
 	 */
 	public function render_locations_field() {
 		$options   = self::get_options();
-		$locations = ! empty( $options['locations'] ) ? $options['locations'] : array( array( 'match' => '', 'html' => '' ) );
+		$empty_row = array( 'match' => '', 'nom' => '', 'adresse' => '', 'lien' => '' );
+		$locations = ! empty( $options['locations'] ) ? $options['locations'] : array( $empty_row );
 
 		echo '<div id="bn-locations-repeater">';
 		foreach ( $locations as $loc ) {
-			$this->render_location_row( $loc['match'], $loc['html'] );
+			$loc = wp_parse_args( $loc, $empty_row );
+			$this->render_location_row( $loc['match'], $loc['nom'], $loc['adresse'], $loc['lien'] );
 		}
 		echo '</div>';
 
@@ -220,30 +271,44 @@ class BN_Settings {
 
 		// Modèle de ligne vierge cloné par le JS admin.
 		echo '<template id="bn-location-row-template">';
-		$this->render_location_row( '', '' );
+		$this->render_location_row( '', '', '', '' );
 		echo '</template>';
 	}
 
 	/**
-	 * Affiche une ligne du répéteur (champ texte « Lieu » + zone HTML).
+	 * Affiche une ligne du répéteur (mot-clé de repérage + nom + adresse + lien Maps).
 	 *
-	 * @param string $match Texte à repérer dans le lieu de l'événement.
-	 * @param string $html  Contenu HTML associé.
+	 * @param string $match   Mot-clé à repérer dans le lieu de l'événement.
+	 * @param string $nom     Nom du lieu affiché ({{nom}}).
+	 * @param string $adresse Adresse affichée ({{adresse}}).
+	 * @param string $lien    URL Google Maps ({{lien}}).
 	 */
-	private function render_location_row( $match, $html ) {
+	private function render_location_row( $match, $nom, $adresse, $lien ) {
 		$name = self::OPTION_NAME;
 		?>
 		<div class="bn-location-row" style="margin-bottom:1em;padding:1em;border:1px solid #dcdcde;background:#fff;max-width:600px;">
 			<p style="margin-top:0;">
 				<label>
-					<strong><?php esc_html_e( 'Lieu (texte à repérer)', 'bad-nantes-calendar' ); ?></strong><br />
-					<input type="text" name="<?php echo esc_attr( $name ); ?>[locations][match][]" value="<?php echo esc_attr( $match ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Ex. : Dervallières', 'bad-nantes-calendar' ); ?>" />
+					<strong><?php esc_html_e( 'Mot-clé à repérer (dans le champ Lieu de l\'agenda)', 'bad-nantes-calendar' ); ?></strong><br />
+					<input type="text" name="<?php echo esc_attr( $name ); ?>[locations][match][]" value="<?php echo esc_attr( $match ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Ex. : Victor Hugo', 'bad-nantes-calendar' ); ?>" />
 				</label>
 			</p>
-			<p style="margin-bottom:0;">
+			<p>
 				<label>
-					<strong><?php esc_html_e( 'Contenu HTML', 'bad-nantes-calendar' ); ?></strong><br />
-					<textarea name="<?php echo esc_attr( $name ); ?>[locations][html][]" rows="3" class="large-text" placeholder="&lt;a href=&quot;...&quot;&gt;Voir le plan&lt;/a&gt;"><?php echo esc_textarea( $html ); ?></textarea>
+					<strong><?php esc_html_e( 'Nom du lieu', 'bad-nantes-calendar' ); ?></strong> <code>{{nom}}</code><br />
+					<input type="text" name="<?php echo esc_attr( $name ); ?>[locations][nom][]" value="<?php echo esc_attr( $nom ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Ex. : Gymnase Victor Hugo', 'bad-nantes-calendar' ); ?>" />
+				</label>
+			</p>
+			<p>
+				<label>
+					<strong><?php esc_html_e( 'Adresse', 'bad-nantes-calendar' ); ?></strong> <code>{{adresse}}</code><br />
+					<input type="text" name="<?php echo esc_attr( $name ); ?>[locations][adresse][]" value="<?php echo esc_attr( $adresse ); ?>" class="large-text" placeholder="<?php esc_attr_e( 'Ex. : 12 rue Victor Hugo, 44000 Nantes', 'bad-nantes-calendar' ); ?>" />
+				</label>
+			</p>
+			<p>
+				<label>
+					<strong><?php esc_html_e( 'Lien Google Maps', 'bad-nantes-calendar' ); ?></strong> <code>{{lien}}</code><br />
+					<input type="url" name="<?php echo esc_attr( $name ); ?>[locations][lien][]" value="<?php echo esc_attr( $lien ); ?>" class="large-text" placeholder="https://maps.google.com/?q=..." />
 				</label>
 			</p>
 			<p style="margin-bottom:0;">
