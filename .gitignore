@@ -1,0 +1,20 @@
+# Fichiers OS
+.DS_Store
+Thumbs.db
+
+# Dossiers d'éditeur / IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Artefacts de build
+*.zip
+*.log
+node_modules/
+build/
+dist/
+
+# NE PAS ignorer les libs embarquées (nécessaires à l'autonomie du zip) :
+# assets/vendor/  -> versionné
+# lib/            -> versionné

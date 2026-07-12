@@ -1,0 +1,79 @@
+# Copyright (C) 2026 Bad'Nantes
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Bad'Nantes Calendar 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/REMPLACER-COMPTE/bad-nantes-calendar/issues\n"
+"POT-Creation-Date: 2026-07-12 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+"X-Domain: bad-nantes-calendar\n"
+
+#: includes/class-bn-settings.php
+msgid "Bad'Nantes Calendar"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Configuration de l'agenda Google"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Clé API Google"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "ID de l'agenda Google"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Heure de début (vue semaine)"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Heure de fin (vue semaine)"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Vue par défaut sur mobile"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Clé API du projet Google Cloud (API Calendar activée)."
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Exemple : xxxx@group.calendar.google.com"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Liste"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Mois"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Vue affichée automatiquement sur petit écran (moins de 600px)."
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Renseignez la clé API Google et l'ID de l'agenda public. Consultez le README pour créer la clé et restreindre son usage."
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Utilisation"
+msgstr ""
+
+#: includes/class-bn-settings.php
+msgid "Insérez un des shortcodes suivants dans une page ou un article :"
+msgstr ""
+
+#: includes/class-bn-shortcode.php
+msgid "Agenda non configuré : renseignez la clé API et l'ID d'agenda dans les réglages."
+msgstr ""

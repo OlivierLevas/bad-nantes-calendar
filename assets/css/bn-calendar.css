@@ -1,0 +1,158 @@
+/**
+ * Styles Bad'Nantes Calendar — charte du club appliquée aux classes FullCalendar (.fc-).
+ *
+ * Toutes les couleurs sont centralisées dans :root pour une édition facile.
+ */
+
+:root {
+	--bn-vert-fonce: #0d3b32;   /* vert foncé principal */
+	--bn-vert-clair: #14554a;   /* vert clair (hover, alternance) */
+	--bn-citron: #c8f24a;       /* jaune-vert citron (texte événements, accents) */
+	--bn-fond-case: #f4f7f2;    /* fond des cases de jour */
+	--bn-citron-clair: #eefbc9; /* surlignage discret du jour courant */
+	--bn-texte-clair: #ffffff;  /* texte sur fond foncé */
+	--bn-radius: 5px;
+}
+
+/* Conteneur */
+.bn-calendar-wrapper {
+	margin: 1rem 0;
+}
+
+.bn-calendar {
+	font-family: inherit;
+}
+
+/* En-têtes de colonnes (jours de la semaine / dates) */
+.bn-calendar .fc-col-header-cell {
+	background-color: var(--bn-vert-fonce);
+}
+
+.bn-calendar .fc-col-header-cell-cushion {
+	color: var(--bn-texte-clair);
+	text-transform: uppercase;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	padding: 8px 4px;
+	text-decoration: none;
+}
+
+/* Cases de jour */
+.bn-calendar .fc-daygrid-day {
+	background-color: var(--bn-fond-case);
+}
+
+.bn-calendar .fc-timegrid-slot,
+.bn-calendar .fc-timegrid-col {
+	background-color: var(--bn-fond-case);
+}
+
+/* Numéro du jour */
+.bn-calendar .fc-daygrid-day-number {
+	color: var(--bn-vert-fonce);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+/* Jour courant surligné en vert citron très clair */
+.bn-calendar .fc-day-today {
+	background-color: var(--bn-citron-clair) !important;
+}
+
+.bn-calendar .fc-day-today .fc-daygrid-day-number {
+	color: var(--bn-vert-fonce);
+}
+
+/* Événements */
+.bn-calendar .fc-event,
+.bn-calendar .fc-event .fc-event-main {
+	background-color: var(--bn-vert-fonce);
+	border-color: var(--bn-vert-fonce);
+	color: var(--bn-citron);
+	border-radius: var(--bn-radius);
+}
+
+.bn-calendar .fc-event-title,
+.bn-calendar .fc-event-time {
+	color: var(--bn-citron);
+}
+
+/* Alternance de teinte pour aérer visuellement (un événement sur deux) */
+.bn-calendar .fc-event:nth-of-type(even),
+.bn-calendar .fc-event:nth-of-type(even) .fc-event-main {
+	background-color: var(--bn-vert-clair);
+	border-color: var(--bn-vert-clair);
+}
+
+/* Titre du calendrier */
+.bn-calendar .fc-toolbar-title {
+	color: var(--bn-vert-fonce);
+	font-weight: 700;
+}
+
+/* Boutons de navigation */
+.bn-calendar .fc-button,
+.bn-calendar .fc-button-primary {
+	background-color: var(--bn-vert-fonce);
+	border-color: var(--bn-vert-fonce);
+	color: var(--bn-texte-clair);
+	text-transform: none;
+	box-shadow: none;
+}
+
+.bn-calendar .fc-button-primary:hover:not(:disabled),
+.bn-calendar .fc-button-primary:focus {
+	background-color: var(--bn-vert-clair);
+	border-color: var(--bn-vert-clair);
+	color: var(--bn-texte-clair);
+}
+
+/* Bouton de la vue active */
+.bn-calendar .fc-button-primary:not(:disabled).fc-button-active {
+	background-color: var(--bn-citron);
+	border-color: var(--bn-citron);
+	color: var(--bn-vert-fonce);
+}
+
+.bn-calendar .fc-button-primary:disabled {
+	background-color: var(--bn-vert-clair);
+	border-color: var(--bn-vert-clair);
+	opacity: 0.6;
+}
+
+/* Vue liste (mobile) : rester lisible */
+.bn-calendar .fc-list {
+	border-radius: var(--bn-radius);
+	overflow: hidden;
+}
+
+.bn-calendar .fc-list-day-cushion {
+	background-color: var(--bn-vert-fonce);
+	color: var(--bn-texte-clair);
+	text-transform: uppercase;
+}
+
+.bn-calendar .fc-list-event:hover td {
+	background-color: var(--bn-citron-clair);
+}
+
+.bn-calendar .fc-list-event-title a {
+	color: var(--bn-vert-fonce);
+	font-weight: 600;
+}
+
+.bn-calendar .fc-list-event-dot {
+	border-color: var(--bn-vert-fonce);
+}
+
+/* Responsive : barre d'outils empilée sur petit écran */
+@media (max-width: 600px) {
+	.bn-calendar .fc-toolbar.fc-header-toolbar {
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.bn-calendar .fc-toolbar-title {
+		font-size: 1.2rem;
+	}
+}
