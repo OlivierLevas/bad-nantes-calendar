@@ -57,6 +57,7 @@
 /* Jour courant surligné en vert citron très clair */
 .bn-calendar .fc-day-today {
 	background-color: var(--wp--preset--color--accent-1, var(--bn-vert-fonce)) !important;
+	color: var(--wp--preset--color--base, var(--bn-texte-clair));
 }
 
 .bn-calendar .fc-day-today .fc-daygrid-day-number {
@@ -88,6 +89,8 @@
 .bn-calendar .bn-event {
 	padding: 2px 4px;
 	line-height: 1.25;
+	/* Autorise le retour à la ligne (FullCalendar force nowrap sur certaines vues). */
+	white-space: normal;
 	/* Fond = couleur accent-1 du thème (fallback vert club si le preset est absent). */
 	background-color: var(--wp--preset--color--accent-1, var(--bn-vert-fonce));
 	/* Texte = couleur base du thème (fallback texte clair). */
@@ -107,6 +110,17 @@
 	margin-top: 2px;
 	font-size: 0.85em;
 	opacity: 0.95;
+}
+
+/* Colonne de l'icône (1re colonne du bloc lieu) : ne réserve pas de largeur fixe,
+   pour laisser l'adresse occuper la place. */
+.bn-calendar .bn-event-location .wp-block-columns > .wp-block-column:first-child {
+	flex-basis: 0;
+}
+
+/* Bouton icône du bloc lieu : léger décalage vertical pour l'aligner avec l'adresse. */
+.bn-calendar .bn-event-location .wp-block-button {
+	margin-top: var(--wp--preset--spacing--20);
 }
 
 /* Liens du bloc lieu : lisibles sur fond vert foncé */
