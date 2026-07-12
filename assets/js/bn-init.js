@@ -1,9 +1,10 @@
 /**
  * Initialisation de FullCalendar pour Bad'Nantes Calendar.
  *
- * Chaque conteneur .bn-calendar possède un attribut data-instance qui pointe
- * vers un objet de configuration localisé par WordPress
- * (window.bnCalendarConfig_<instance>). Aucune clé n'est codée en dur ici.
+ * Chaque conteneur .bn-calendar porte sa configuration dans un attribut
+ * data-config (JSON). Ce choix évite toute dépendance à l'ordre de chargement
+ * des scripts et fonctionne sur tous les thèmes (classiques, FSE, page builders).
+ * Aucune donnée sensible : le flux ICS est public.
  */
 (function () {
 	'use strict';
@@ -27,10 +28,17 @@
 	 * @param {HTMLElement} el Élément conteneur.
 	 */
 	function initCalendar(el) {
-		var instance = el.getAttribute('data-instance');
-		var config = window['bnCalendarConfig_' + instance];
+		var raw = el.getAttribute('data-config');
+		var config;
+
+		try {
+			config = raw ? JSON.parse(raw) : null;
+		} catch (e) {
+			config = null;
+		}
 
 		if (!config) {
+			el.textContent = 'Bad’Nantes Calendar : configuration illisible.';
 			return;
 		}
 

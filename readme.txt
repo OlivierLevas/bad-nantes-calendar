@@ -4,7 +4,7 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,11 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.0.1 =
+* Correctif : la configuration du calendrier est désormais transmise via un
+  attribut data- sur le conteneur (au lieu de wp_localize_script). Corrige le
+  calendrier qui restait vide sur les thèmes de blocs (FSE) et page builders.
 
 = 1.0.0 =
 * Version initiale : shortcode `[bn_calendar]`, vues mois/semaine/liste,

@@ -134,14 +134,16 @@ class BN_Shortcode {
 			),
 		);
 
-		// wp_localize_script crée une variable globale par instance de conteneur.
-		wp_localize_script( 'bn-init', 'bnCalendarConfig_' . self::$instance_count, $config );
+		// La config voyage dans un attribut data- de la balise : robuste sur tous les
+		// thèmes (y compris FSE/page builders), sans dépendre de l'ordre de chargement
+		// des scripts comme le faisait wp_localize_script.
+		$config_json = wp_json_encode( $config );
 
 		// Conteneur ciblé par le JS.
 		return sprintf(
-			'<div class="bn-calendar-wrapper"><div id="%1$s" class="bn-calendar" data-instance="%2$d"></div></div>',
+			'<div class="bn-calendar-wrapper"><div id="%1$s" class="bn-calendar" data-config="%2$s"></div></div>',
 			esc_attr( $container_id ),
-			(int) self::$instance_count
+			esc_attr( $config_json )
 		);
 	}
 }
