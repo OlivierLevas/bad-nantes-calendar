@@ -65,12 +65,26 @@ class BN_Settings {
 	}
 
 	/**
-	 * Gabarit HTML par défaut : nom, adresse et bouton vers Google Maps.
+	 * Gabarit HTML par défaut : icône Maps cliquable, nom et adresse.
+	 *
+	 * Markup volontairement dépourvu de classes Gutenberg (wp-block-columns, is-layout-flex,
+	 * classes à hash…) : la mise en forme est portée par les seules classes .bn-loc* de
+	 * assets/css/bn-calendar.css, donc aucune règle du thème n'a besoin d'être surchargée.
 	 *
 	 * @return string
 	 */
 	public static function default_location_template() {
-		return "<div class=\"bn-event-place\">\n\t<strong>{{nom}}</strong><br />\n\t{{adresse}}<br />\n\t<a href=\"{{lien}}\" target=\"_blank\" rel=\"noopener\">Voir sur Google Maps</a>\n</div>";
+		return <<<'HTML'
+<div class="bn-loc">
+	<a class="bn-loc-icon" href="{{lien}}" target="_blank" rel="noreferrer noopener">
+		<svg aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M0 188.6C0 84.4 86 0 192 0S384 84.4 384 188.6c0 119.3-120.2 262.3-170.4 316.8-11.8 12.8-31.5 12.8-43.3 0-50.2-54.5-170.4-197.5-170.4-316.8zM192 256a64 64 0 1 0 0-128 64 64 0 1 0 0 128z"/></svg>
+	</a>
+	<div class="bn-loc-text">
+		<span class="bn-loc-name">{{nom}}</span>
+		<span class="bn-loc-address">{{adresse}}</span>
+	</div>
+</div>
+HTML;
 	}
 
 	/**

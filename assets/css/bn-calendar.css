@@ -124,52 +124,46 @@
 	opacity: 0.95;
 }
 
-/* Colonne de l'icône (1re colonne du bloc lieu) : la colonne se dimensionne sur son
-   contenu au lieu du flex-basis:45px inline du gabarit (!important requis pour battre
-   le style inline), l'adresse récupère la place restante. */
-.bn-calendar .bn-event-location .wp-block-columns > .wp-block-column:first-child {
+/* Bloc lieu — le gabarit par défaut n'utilise QUE des classes .bn-loc* : aucune règle de
+   layout du thème/Gutenberg ne le cible, donc rien à neutraliser et aucun !important.
+   Si tu colles un gabarit Gutenberg à la place, ces règles ne s'appliqueront plus. */
+.bn-calendar .bn-loc {
 	display: flex;
-	flex-basis: auto !important;
-	width: auto !important;
+	align-items: center;
+	/* L'icône passe au-dessus du texte quand la case du calendrier est trop étroite. */
+	flex-wrap: wrap;
 }
 
-/* Les colonnes du bloc lieu s'empilent quand la case du calendrier est trop étroite
-   (annule le flex-wrap:nowrap !important du core sur .is-not-stacked-on-mobile). */
-.bn-calendar .bn-event-location .wp-block-columns.is-not-stacked-on-mobile {
-	flex-wrap: wrap !important;
+/* Icône Maps : couleurs inversées par rapport à la pastille. */
+.bn-calendar .bn-loc-icon {
+	display: flex;
+	padding: 4px;
+	background-color: var(--wp--preset--color--base, var(--bn-texte-clair));
+	color: var(--wp--preset--color--accent-1, var(--bn-vert-fonce));
+	text-decoration: none;
 }
 
-/* Icône et adresse collées (annule le gap des presets d'espacement du thème, posé par le
-   core sur .wp-block-columns-is-layout-flex et sur la classe à hash du gabarit). */
-.bn-calendar .bn-event-location .wp-block-columns {
-	gap: 0;
+.bn-calendar .bn-loc-icon svg {
+	display: block;
+	width: 1em;
+	height: 1em;
 }
 
-/* L'adresse ne se coupe pas en plein mot (annule le word-break du core). Effet de bord
-   utile : la largeur min-content de la colonne redevient celle du mot le plus long, ce
-   qui déclenche le retour à la ligne des colonnes ci-dessus. */
-.bn-calendar .bn-event-location .wp-block-column {
-	overflow-wrap: normal;
-	word-break: normal;
-	/* Pas de padding horizontal (le gabarit en pose un en style inline : !important requis). */
-	padding-inline: 0 !important;
+/* Nom + adresse empilés. min-width:0 autorise le rétrécissement sous la largeur du
+   contenu ; sans coupure en plein mot (le retour à la ligne se fait entre les mots). */
+.bn-calendar .bn-loc-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	padding-left: 4px;
 }
 
-/* Les colonnes du bloc lieu occupent toute la hauteur (annule le align-self:flex-start
-   du core sur .is-vertically-aligned-top). */
-.bn-calendar .bn-event-location .wp-block-column.is-vertically-aligned-top {
-	align-self: stretch;
+.bn-calendar .bn-loc-name {
+	font-weight: 600;
 }
 
-/* Pas d'espacement entre les boutons du bloc lieu (annule le gap:16px du core). */
-.bn-calendar .bn-event-location .wp-block-buttons {
-	gap: 0;
-}
-
-/* Liens du bloc lieu : lisibles sur fond vert foncé */
-.bn-calendar .bn-event-location a {
-	color: var(--bn-citron);
-	text-decoration: underline;
+.bn-calendar .bn-loc-address {
+	color: var(--wp--preset--color--accent-4, var(--bn-citron));
 }
 
 .bn-calendar .bn-event-location img {
@@ -183,10 +177,6 @@
 .bn-calendar .fc-list-event .bn-event-title,
 .bn-calendar .fc-list-event .bn-event-location {
 	color: var(--bn-vert-fonce);
-}
-
-.bn-calendar .fc-list-event .bn-event-location a {
-	color: var(--bn-vert-clair);
 }
 
 /* Pastille de couleur des événements en vue liste : masquée */
