@@ -133,6 +133,20 @@
 	width: auto !important;
 }
 
+/* Les colonnes du bloc lieu s'empilent quand la case du calendrier est trop étroite
+   (annule le flex-wrap:nowrap !important du core sur .is-not-stacked-on-mobile). */
+.bn-calendar .bn-event-location .wp-block-columns.is-not-stacked-on-mobile {
+	flex-wrap: wrap !important;
+}
+
+/* L'adresse ne se coupe pas en plein mot (annule le word-break du core). Effet de bord
+   utile : la largeur min-content de la colonne redevient celle du mot le plus long, ce
+   qui déclenche le retour à la ligne des colonnes ci-dessus. */
+.bn-calendar .bn-event-location .wp-block-column {
+	overflow-wrap: normal;
+	word-break: normal;
+}
+
 /* Les colonnes du bloc lieu occupent toute la hauteur (annule le align-self:flex-start
    du core sur .is-vertically-aligned-top). */
 .bn-calendar .bn-event-location .wp-block-column.is-vertically-aligned-top {
