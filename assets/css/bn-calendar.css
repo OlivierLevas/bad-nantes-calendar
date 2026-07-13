@@ -264,3 +264,45 @@
 		font-size: 1.2rem;
 	}
 }
+
+/* Créneaux rendus par PHP.
+   Ce bloc n'est visible que le temps du chargement de FullCalendar, qui vide le
+   conteneur au démarrage. Il reste affiché si le JS échoue : il doit donc être
+   lisible tel quel, et non un simple entrefilet technique. */
+.bn-slots {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.bn-slot {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 10px 12px;
+	border-radius: var(--bn-radius);
+	background: var(--bn-vert-fonce);
+	color: var(--bn-texte-clair);
+}
+
+.bn-slot:nth-of-type(even) {
+	background: var(--bn-vert-clair);
+}
+
+.bn-slot-time {
+	font-weight: 700;
+	text-transform: capitalize;
+}
+
+.bn-slot-title {
+	color: var(--wp--preset--color--accent-4, var(--bn-citron));
+	font-weight: 600;
+}
+
+.bn-slot-location {
+	font-size: 0.9em;
+	opacity: 0.95;
+}

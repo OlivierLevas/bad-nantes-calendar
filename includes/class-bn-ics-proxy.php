@@ -51,38 +51,80 @@ class BN_Ics_Proxy {
 	}
 
 	/**
-	 * Récupère et diffuse le flux ICS (avec cache), puis termine la requête.
+	 * Retourne les créneaux de la semaine en cours (lundi → dimanche).
+	 *
+	 * Source unique des créneaux côté serveur : le rendu HTML du shortcode et le
+	 * schema.org en tirent tous deux leurs données, sur la même fenêtre.
+	 *
+	 * @return array Occurrences au format BN_Ics_Parser::occurrences(), éventuellement vide.
 	 */
-	public function serve() {
+	public static function get_week_occurrences() {
+		$ics = self::get_ics();
+
+		if ( null === $ics ) {
+			return array();
+		}
+
+		$timezone = wp_timezone();
+		$from     = current_datetime()->setTimezone( $timezone )->modify( 'monday this week' )->setTime( 0, 0 );
+
+		return BN_Ics_Parser::occurrences( $ics, $from, $from->modify( '+7 days' ), $timezone );
+	}
+
+	/**
+	 * Récupère le flux ICS configuré, en s'appuyant sur le cache.
+	 *
+	 * Partagé par le proxy (qui le rediffuse au navigateur) et par le shortcode
+	 * (qui en tire le rendu serveur des créneaux) : les deux passent par le même
+	 * transient, donc une seule requête sortante toutes les CACHE_TTL secondes.
+	 *
+	 * @return string|null Contenu du flux, ou null si non configuré ou injoignable.
+	 */
+	public static function get_ics() {
 		$options = BN_Settings::get_options();
 		$ics_url = isset( $options['ics_url'] ) ? $options['ics_url'] : '';
 
 		if ( empty( $ics_url ) ) {
-			status_header( 404 );
-			nocache_headers();
-			exit;
+			return null;
 		}
 
 		$body = get_transient( self::TRANSIENT_KEY );
 
-		if ( false === $body ) {
-			$response = wp_remote_get(
-				$ics_url,
-				array(
-					'timeout'     => 15,
-					'redirection' => 3,
-					'user-agent'  => 'Bad-Nantes-Calendar/' . BN_CALENDAR_VERSION,
-				)
-			);
+		if ( false !== $body ) {
+			return $body;
+		}
 
-			if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-				status_header( 502 );
-				nocache_headers();
-				exit;
-			}
+		$response = wp_remote_get(
+			$ics_url,
+			array(
+				'timeout'     => 15,
+				'redirection' => 3,
+				'user-agent'  => 'Bad-Nantes-Calendar/' . BN_CALENDAR_VERSION,
+			)
+		);
 
-			$body = wp_remote_retrieve_body( $response );
-			set_transient( self::TRANSIENT_KEY, $body, self::CACHE_TTL );
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return null;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		set_transient( self::TRANSIENT_KEY, $body, self::CACHE_TTL );
+
+		return $body;
+	}
+
+	/**
+	 * Récupère et diffuse le flux ICS (avec cache), puis termine la requête.
+	 */
+	public function serve() {
+		$body = self::get_ics();
+
+		if ( null === $body ) {
+			$options = BN_Settings::get_options();
+			// Distingue « pas d'agenda configuré » (404) de « flux injoignable » (502).
+			status_header( empty( $options['ics_url'] ) ? 404 : 502 );
+			nocache_headers();
+			exit;
 		}
 
 		// Diffusion du flux ICS brut.

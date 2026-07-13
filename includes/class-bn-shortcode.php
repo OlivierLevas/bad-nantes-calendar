@@ -183,11 +183,102 @@ class BN_Shortcode {
 		// des scripts comme le faisait wp_localize_script.
 		$config_json = wp_json_encode( $config );
 
-		// Conteneur ciblé par le JS.
+		// Conteneur ciblé par le JS. Il est pré-rempli avec les créneaux de la semaine
+		// en HTML : c'est la seule version lisible par les moteurs de recherche et les
+		// robots des IA, qui n'exécutent pas FullCalendar. Au démarrage, le JS vide le
+		// conteneur et y rend le calendrier — l'affichage pour le visiteur est inchangé,
+		// et ce contenu sert aussi de repli si le JS échoue.
 		return sprintf(
-			'<div class="bn-calendar-wrapper"><div id="%1$s" class="bn-calendar" data-config="%2$s"></div></div>',
+			'<div class="bn-calendar-wrapper"><div id="%1$s" class="bn-calendar" data-config="%2$s">%3$s</div></div>',
 			esc_attr( $container_id ),
-			esc_attr( $config_json )
+			esc_attr( $config_json ),
+			$this->render_week( $options )
 		);
+	}
+
+	/**
+	 * Rend les créneaux de la semaine en cours, en HTML.
+	 *
+	 * Les créneaux d'un club changent peu d'une semaine à l'autre : on se
+	 * contente de la semaine courante, quitte à ce qu'une page servie depuis un
+	 * cache ancien montre une semaine passée — les horaires, eux, restent justes.
+	 *
+	 * @param array $options Réglages du plugin.
+	 * @return string HTML, ou chaîne vide si le flux est indisponible ou la semaine creuse.
+	 */
+	private function render_week( array $options ) {
+		$occurrences = BN_Ics_Proxy::get_week_occurrences();
+
+		if ( array() === $occurrences ) {
+			return '';
+		}
+
+		$timezone = wp_timezone();
+		$items    = '';
+		foreach ( $occurrences as $occurrence ) {
+			$start = $occurrence['start'];
+			$end   = $occurrence['end'];
+
+			// Chaque partie est un élément de bloc : à l'extraction du texte, les
+			// robots séparent les lignes au lieu de coller « 19h30Créneau d'été ».
+			$items .= sprintf(
+				'<li class="bn-slot"><div class="bn-slot-time"><time datetime="%1$s">%2$s</time></div>%3$s%4$s</li>',
+				esc_attr( $start->format( DateTimeInterface::ATOM ) ),
+				esc_html(
+					sprintf(
+						/* translators: 1: jour et date (ex. « mardi 14 juillet »), 2: heure de début, 3: heure de fin. */
+						__( '%1$s de %2$s à %3$s', 'bad-nantes-calendar' ),
+						wp_date( 'l j F', $start->getTimestamp(), $timezone ),
+						wp_date( 'H\hi', $start->getTimestamp(), $timezone ),
+						wp_date( 'H\hi', $end->getTimestamp(), $timezone )
+					)
+				),
+				'' !== $occurrence['summary'] ? '<div class="bn-slot-title">' . esc_html( $occurrence['summary'] ) . '</div>' : '',
+				$this->render_location( $occurrence['location'], $options )
+			);
+		}
+
+		return sprintf(
+			'<ul class="bn-slots">%s</ul>',
+			$items
+		);
+	}
+
+	/**
+	 * Rend le lieu d'un créneau : nom et adresse du gymnase quand il est connu
+	 * des réglages, sinon le lieu brut du flux.
+	 *
+	 * @param string $location Lieu tel qu'écrit dans l'agenda (ex. « Victor Hugo »).
+	 * @param array  $options  Réglages du plugin.
+	 * @return string HTML, ou chaîne vide si le créneau n'a pas de lieu.
+	 */
+	private function render_location( $location, array $options ) {
+		if ( '' === $location ) {
+			return '';
+		}
+
+		$haystack = function_exists( 'mb_strtolower' ) ? mb_strtolower( $location ) : strtolower( $location );
+
+		foreach ( (array) $options['locations'] as $loc ) {
+			$match = isset( $loc['match'] ) ? $loc['match'] : '';
+			if ( '' === $match ) {
+				continue;
+			}
+
+			$needle = function_exists( 'mb_strtolower' ) ? mb_strtolower( $match ) : strtolower( $match );
+			if ( false === strpos( $haystack, $needle ) ) {
+				continue;
+			}
+
+			$nom     = isset( $loc['nom'] ) ? $loc['nom'] : '';
+			$adresse = isset( $loc['adresse'] ) ? $loc['adresse'] : '';
+			$parts   = array_filter( array( $nom, $adresse ) );
+
+			if ( array() !== $parts ) {
+				return '<div class="bn-slot-location">' . esc_html( implode( ', ', $parts ) ) . '</div>';
+			}
+		}
+
+		return '<div class="bn-slot-location">' . esc_html( $location ) . '</div>';
 	}
 }

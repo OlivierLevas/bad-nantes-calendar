@@ -3,7 +3,7 @@
  * Plugin Name:       Bad'Nantes Calendar
  * Plugin URI:        https://github.com/OlivierLevas/bad-nantes-calendar
  * Description:        Affiche l'agenda Google public du club Bad'Nantes via FullCalendar 6, en vue semaine (grille horaire) ou vue mois. FullCalendar est embarqué en local, pas de CDN.
- * Version:           1.0.19
+ * Version:           1.0.20
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Bad'Nantes
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Constantes du plugin.
  */
-define( 'BN_CALENDAR_VERSION', '1.0.19' );
+define( 'BN_CALENDAR_VERSION', '1.0.20' );
 define( 'BN_CALENDAR_FILE', __FILE__ );
 define( 'BN_CALENDAR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BN_CALENDAR_URL', plugin_dir_url( __FILE__ ) );
@@ -38,7 +38,9 @@ define( 'BN_CALENDAR_GITHUB_URL', 'https://github.com/OlivierLevas/bad-nantes-ca
  * Charge les classes du plugin.
  */
 require_once BN_CALENDAR_DIR . 'includes/class-bn-settings.php';
+require_once BN_CALENDAR_DIR . 'includes/class-bn-ics-parser.php';
 require_once BN_CALENDAR_DIR . 'includes/class-bn-ics-proxy.php';
+require_once BN_CALENDAR_DIR . 'includes/class-bn-schema.php';
 require_once BN_CALENDAR_DIR . 'includes/class-bn-shortcode.php';
 
 /**
@@ -59,6 +61,7 @@ add_action( 'plugins_loaded', 'bn_calendar_load_textdomain' );
 function bn_calendar_init() {
 	new BN_Settings();
 	new BN_Ics_Proxy();
+	new BN_Schema();
 	new BN_Shortcode();
 }
 add_action( 'init', 'bn_calendar_init' );

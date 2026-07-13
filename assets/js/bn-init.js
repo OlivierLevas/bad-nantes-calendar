@@ -108,7 +108,18 @@
 			return;
 		}
 
+		// FullCalendar absent (script non chargé) : on laisse en place les créneaux
+		// rendus par PHP, qui restent lisibles.
+		if (typeof FullCalendar === 'undefined') {
+			return;
+		}
+
 		var currentView = pickView(config);
+
+		// Le conteneur arrive pré-rempli avec les créneaux de la semaine rendus par
+		// PHP (contenu lisible par les moteurs de recherche et les robots des IA).
+		// On le vide avant de laisser FullCalendar prendre la place.
+		el.textContent = '';
 
 		var calendar = new FullCalendar.Calendar(el, {
 			initialView: currentView,
