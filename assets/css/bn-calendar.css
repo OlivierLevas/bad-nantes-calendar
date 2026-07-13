@@ -167,6 +167,11 @@
 	color: var(--bn-vert-clair);
 }
 
+/* Pastille de couleur des événements en vue liste : masquée */
+.bn-calendar .fc-list-event-dot {
+	display: none;
+}
+
 /* Titre du calendrier */
 .bn-calendar .fc-toolbar-title {
 	color: var(--bn-vert-fonce);
