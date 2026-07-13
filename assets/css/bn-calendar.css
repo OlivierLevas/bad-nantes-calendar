@@ -139,6 +139,12 @@
 	flex-wrap: wrap !important;
 }
 
+/* Icône et adresse collées (annule le gap des presets d'espacement du thème, posé par le
+   core sur .wp-block-columns-is-layout-flex et sur la classe à hash du gabarit). */
+.bn-calendar .bn-event-location .wp-block-columns {
+	gap: 0;
+}
+
 /* L'adresse ne se coupe pas en plein mot (annule le word-break du core). Effet de bord
    utile : la largeur min-content de la colonne redevient celle du mot le plus long, ce
    qui déclenche le retour à la ligne des colonnes ci-dessus. */
