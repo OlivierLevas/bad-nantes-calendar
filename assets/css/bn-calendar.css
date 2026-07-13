@@ -132,8 +132,11 @@
 	align-items: center;
 }
 
-/* Icône Maps : couleurs inversées par rapport à la pastille. */
-.bn-calendar .bn-loc-icon {
+/* Icône Maps : couleurs inversées par rapport à la pastille.
+   Sélecteur volontairement à 3 classes (0-3-0) : FullCalendar injecte au runtime
+   « .fc .fc-list-event-title a { color: inherit } » (0-2-1), qui attrape ce lien en vue
+   liste. Ne pas raccourcir en « .bn-calendar .bn-loc-icon » : l'icône perdrait sa couleur. */
+.bn-calendar .bn-event-location .bn-loc-icon {
 	display: flex;
 	padding: 10px;
 	background-color: var(--wp--preset--color--base, var(--bn-texte-clair));
