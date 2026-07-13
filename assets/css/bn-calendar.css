@@ -220,6 +220,11 @@
 	text-transform: uppercase;
 }
 
+/* Libellé de la date dans l'en-tête de jour (vue liste) : couleur accent-1 du thème. */
+.bn-calendar .fc-list-day-text {
+	color: var(--wp--preset--color--accent-1, var(--bn-citron));
+}
+
 .bn-calendar .fc-list-event:hover td {
 	background-color: var(--bn-citron-clair);
 }
