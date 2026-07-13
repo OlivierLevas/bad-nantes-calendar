@@ -151,6 +151,8 @@
 .bn-calendar .bn-event-location .wp-block-column {
 	overflow-wrap: normal;
 	word-break: normal;
+	/* Pas de padding horizontal (le gabarit en pose un en style inline : !important requis). */
+	padding-inline: 0 !important;
 }
 
 /* Les colonnes du bloc lieu occupent toute la hauteur (annule le align-self:flex-start
