@@ -124,15 +124,24 @@
 	opacity: 0.95;
 }
 
-/* Colonne de l'icône (1re colonne du bloc lieu) : annule le flex-basis:45px inline
-   du gabarit (!important requis pour battre le style inline), l'adresse prend la place. */
+/* Colonne de l'icône (1re colonne du bloc lieu) : la colonne se dimensionne sur son
+   contenu au lieu du flex-basis:45px inline du gabarit (!important requis pour battre
+   le style inline), l'adresse récupère la place restante. */
 .bn-calendar .bn-event-location .wp-block-columns > .wp-block-column:first-child {
-	flex-basis: 0 !important;
+	display: flex;
+	flex-basis: auto !important;
+	width: auto !important;
 }
 
-/* Bouton icône du bloc lieu : léger décalage vertical pour l'aligner avec l'adresse. */
-.bn-calendar .bn-event-location .wp-block-button {
-	margin-top: var(--wp--preset--spacing--20);
+/* Les colonnes du bloc lieu occupent toute la hauteur (annule le align-self:flex-start
+   du core sur .is-vertically-aligned-top). */
+.bn-calendar .bn-event-location .wp-block-column.is-vertically-aligned-top {
+	align-self: stretch;
+}
+
+/* Pas d'espacement entre les boutons du bloc lieu (annule le gap:16px du core). */
+.bn-calendar .bn-event-location .wp-block-buttons {
+	gap: 0;
 }
 
 /* Liens du bloc lieu : lisibles sur fond vert foncé */
