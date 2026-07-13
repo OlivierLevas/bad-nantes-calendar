@@ -130,14 +130,12 @@
 .bn-calendar .bn-loc {
 	display: flex;
 	align-items: center;
-	/* L'icône passe au-dessus du texte quand la case du calendrier est trop étroite. */
-	flex-wrap: wrap;
 }
 
 /* Icône Maps : couleurs inversées par rapport à la pastille. */
 .bn-calendar .bn-loc-icon {
 	display: flex;
-	padding: 4px;
+	padding: 10px;
 	background-color: var(--wp--preset--color--base, var(--bn-texte-clair));
 	color: var(--wp--preset--color--accent-1, var(--bn-vert-fonce));
 	text-decoration: none;
@@ -146,7 +144,7 @@
 .bn-calendar .bn-loc-icon svg {
 	display: block;
 	width: 1em;
-	height: 1em;
+	height: 1.2em;
 }
 
 /* Nom + adresse empilés. min-width:0 autorise le rétrécissement sous la largeur du
@@ -241,7 +239,9 @@
 	background-color: var(--bn-citron-clair);
 }
 
-.bn-calendar .fc-list-event-title a {
+/* Lien de titre de FullCalendar (vue liste). Enfant direct uniquement : un sélecteur
+   descendant attraperait aussi le lien de l'icône du bloc lieu et écraserait sa couleur. */
+.bn-calendar .fc-list-event-title > a {
 	color: var(--bn-vert-fonce);
 	font-weight: 600;
 }
