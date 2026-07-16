@@ -4,7 +4,7 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.20
+Stable tag: 1.0.21
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,16 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.0.21 =
+* Le flux ICS est désormais servi par une route REST (`bad-nantes/v1/ics`) et non
+  plus par `admin-post.php`. Les filtrages réseau (VPN, proxies d'entreprise)
+  bloquent couramment `/wp-admin/` : le navigateur n'atteignait jamais le flux et
+  l'agenda s'affichait vide, alors que le serveur le servait correctement.
+  L'ancienne adresse reste active en alias pour les pages encore en cache.
+* Un flux injoignable affiche maintenant un avertissement au-dessus du calendrier
+  au lieu d'échouer en silence sur une grille vide. L'avertissement disparaît dès
+  que le flux répond de nouveau.
 
 = 1.0.20 =
 * Créneaux rendus en HTML côté serveur : le conteneur du calendrier était livré

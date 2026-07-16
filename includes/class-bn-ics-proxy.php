@@ -14,7 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Endpoint admin-post (accessible connecté ou non) qui diffuse le flux ICS.
+ * Endpoint REST public (bad-nantes/v1/ics) qui diffuse le flux ICS, doublé d'un
+ * alias admin-post historique. Accessible connecté ou non.
  */
 class BN_Ics_Proxy {
 
@@ -69,8 +70,8 @@ class BN_Ics_Proxy {
 			self::REST_NAMESPACE,
 			self::REST_ROUTE,
 			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, 'serve' ),
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'serve' ),
 				// Flux public : pas de nonce, qui serait de toute façon périmé
 				// dans les pages servies depuis un cache.
 				'permission_callback' => '__return_true',

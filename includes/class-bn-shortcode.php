@@ -175,7 +175,7 @@ class BN_Shortcode {
 			'locationHtml' => $locations,
 			'i18n'         => array(
 				'missingConfig' => __( "Agenda non configuré : renseignez l'URL du flux ICS dans les réglages.", 'bad-nantes-calendar' ),
-				'loadError'     => __( 'Agenda momentanément indisponible : voici les créneaux habituels.', 'bad-nantes-calendar' ),
+				'loadError'     => __( 'Agenda momentanément indisponible, réessayez plus tard.', 'bad-nantes-calendar' ),
 			),
 		);
 

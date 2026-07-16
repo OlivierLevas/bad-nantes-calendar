@@ -23,6 +23,17 @@
 	font-family: inherit;
 }
 
+/* Avertissement affiché au-dessus du calendrier quand le flux ICS est injoignable. */
+.bn-calendar-error {
+	margin: 0 0 0.75rem;
+	padding: 0.6rem 0.9rem;
+	border-left: 4px solid var(--bn-citron);
+	border-radius: var(--bn-radius);
+	background-color: var(--bn-vert-fonce);
+	color: var(--bn-texte-clair);
+	font-size: 0.9em;
+}
+
 /* En-têtes de colonnes (jours de la semaine / dates) */
 .bn-calendar .fc-col-header-cell {
 	background-color: var(--bn-vert-fonce);

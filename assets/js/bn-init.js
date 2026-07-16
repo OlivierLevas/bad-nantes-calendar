@@ -118,10 +118,12 @@
 
 		// Le conteneur arrive pré-rempli avec les créneaux de la semaine rendus par
 		// PHP (contenu lisible par les moteurs de recherche et les robots des IA).
-		// On le mémorise avant de le vider : si le flux se révèle injoignable, il
-		// sert de repli plutôt que de laisser un calendrier vide (cf. eventSourceFailure).
-		var fallbackHtml = el.innerHTML;
+		// On le vide avant de laisser FullCalendar prendre la place.
 		el.textContent = '';
+
+		// Avertissement affiché en cas de flux injoignable, retiré dès qu'il répond.
+		// Mémorisé ici pour n'en afficher qu'un seul, quel que soit le nombre de refetchs.
+		var warningEl = null;
 
 		var calendar = new FullCalendar.Calendar(el, {
 			initialView: currentView,
@@ -149,24 +151,32 @@
 				format: 'ics'
 			},
 			// Flux injoignable (proxy en panne, requête bloquée par un filtrage
-			// réseau, réponse illisible…). Sans ce repli, FullCalendar s'affiche
-			// parfaitement vide et sans le moindre message : on restaure les
-			// créneaux rendus par PHP, précédés d'un avertissement.
+			// réseau, réponse illisible…). Sans ce message, FullCalendar s'affiche
+			// parfaitement vide et sans la moindre explication. On se contente
+			// d'avertir au-dessus du calendrier : celui-ci reste vivant, donc la
+			// navigation refetche le flux et l'agenda se remplit dès qu'il répond.
 			eventSourceFailure: function (error) {
 				if (window.console && window.console.error) {
 					window.console.error('Bad’Nantes Calendar : flux ICS injoignable.', error);
 				}
-				// Différé : on ne détruit pas le calendrier depuis son propre cycle de rendu.
-				window.setTimeout(function () {
-					calendar.destroy();
-					el.innerHTML = fallbackHtml;
 
-					var warning = document.createElement('p');
-					warning.className = 'bn-calendar-error';
-					warning.textContent = (config.i18n && config.i18n.loadError) ||
-						'Agenda momentanément indisponible : voici les créneaux habituels.';
-					el.insertBefore(warning, el.firstChild);
-				}, 0);
+				if (warningEl) {
+					return;
+				}
+
+				warningEl = document.createElement('p');
+				warningEl.className = 'bn-calendar-error';
+				warningEl.textContent = (config.i18n && config.i18n.loadError) ||
+					'Agenda momentanément indisponible, réessayez plus tard.';
+				el.parentNode.insertBefore(warningEl, el);
+			},
+			// Le flux répond de nouveau (navigation, refetch) : on retire l'avertissement.
+			eventSourceSuccess: function (rawEvents) {
+				if (warningEl) {
+					warningEl.parentNode.removeChild(warningEl);
+					warningEl = null;
+				}
+				return rawEvents;
 			},
 			// Bascule automatique de vue au redimensionnement (desktop <-> mobile).
 			windowResize: function () {
