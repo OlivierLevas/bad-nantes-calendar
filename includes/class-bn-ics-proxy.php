@@ -19,9 +19,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 class BN_Ics_Proxy {
 
 	/**
-	 * Action admin-post utilisée par le proxy.
+	 * Action admin-post utilisée par le proxy (alias historique, cf. __construct).
 	 */
 	const ACTION = 'bn_calendar_ics';
+
+	/**
+	 * Namespace REST du proxy.
+	 */
+	const REST_NAMESPACE = 'bad-nantes/v1';
+
+	/**
+	 * Route REST du proxy.
+	 */
+	const REST_ROUTE = '/ics';
 
 	/**
 	 * Clé du transient de cache.
@@ -35,10 +45,37 @@ class BN_Ics_Proxy {
 
 	/**
 	 * Enregistre l'endpoint pour les visiteurs connectés et anonymes.
+	 *
+	 * Le point d'entrée officiel est la route REST : le chemin /wp-admin/ des
+	 * hooks admin_post est couramment bloqué par les filtrages réseau (VPN et
+	 * proxies d'entreprise), ce qui rendait le flux inaccessible au navigateur
+	 * alors même que le serveur le servait correctement.
+	 *
+	 * Les hooks admin_post restent branchés en alias : les pages HTML déjà en
+	 * cache embarquent l'ancienne URL dans leur data-config et continuent de
+	 * l'appeler jusqu'à leur purge.
 	 */
 	public function __construct() {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'serve' ) );
 		add_action( 'admin_post_nopriv_' . self::ACTION, array( $this, 'serve' ) );
+		add_action( 'rest_api_init', array( $this, 'register_route' ) );
+	}
+
+	/**
+	 * Déclare la route REST publique servant le flux.
+	 */
+	public function register_route() {
+		register_rest_route(
+			self::REST_NAMESPACE,
+			self::REST_ROUTE,
+			array(
+				'methods'  => 'GET',
+				'callback' => array( $this, 'serve' ),
+				// Flux public : pas de nonce, qui serait de toute façon périmé
+				// dans les pages servies depuis un cache.
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -47,7 +84,7 @@ class BN_Ics_Proxy {
 	 * @return string
 	 */
 	public static function get_proxy_url() {
-		return add_query_arg( 'action', self::ACTION, admin_url( 'admin-post.php' ) );
+		return rest_url( self::REST_NAMESPACE . self::REST_ROUTE );
 	}
 
 	/**
@@ -115,6 +152,10 @@ class BN_Ics_Proxy {
 
 	/**
 	 * Récupère et diffuse le flux ICS (avec cache), puis termine la requête.
+	 *
+	 * Sert de callback aux deux points d'entrée (REST et admin_post). Le exit
+	 * final court-circuite volontairement la sérialisation JSON de l'API REST :
+	 * on diffuse du text/calendar brut, tel que le connecteur iCalendar l'attend.
 	 */
 	public function serve() {
 		$body = self::get_ics();

@@ -118,7 +118,9 @@
 
 		// Le conteneur arrive pré-rempli avec les créneaux de la semaine rendus par
 		// PHP (contenu lisible par les moteurs de recherche et les robots des IA).
-		// On le vide avant de laisser FullCalendar prendre la place.
+		// On le mémorise avant de le vider : si le flux se révèle injoignable, il
+		// sert de repli plutôt que de laisser un calendrier vide (cf. eventSourceFailure).
+		var fallbackHtml = el.innerHTML;
 		el.textContent = '';
 
 		var calendar = new FullCalendar.Calendar(el, {
@@ -145,6 +147,26 @@
 			events: {
 				url: config.icsUrl,
 				format: 'ics'
+			},
+			// Flux injoignable (proxy en panne, requête bloquée par un filtrage
+			// réseau, réponse illisible…). Sans ce repli, FullCalendar s'affiche
+			// parfaitement vide et sans le moindre message : on restaure les
+			// créneaux rendus par PHP, précédés d'un avertissement.
+			eventSourceFailure: function (error) {
+				if (window.console && window.console.error) {
+					window.console.error('Bad’Nantes Calendar : flux ICS injoignable.', error);
+				}
+				// Différé : on ne détruit pas le calendrier depuis son propre cycle de rendu.
+				window.setTimeout(function () {
+					calendar.destroy();
+					el.innerHTML = fallbackHtml;
+
+					var warning = document.createElement('p');
+					warning.className = 'bn-calendar-error';
+					warning.textContent = (config.i18n && config.i18n.loadError) ||
+						'Agenda momentanément indisponible : voici les créneaux habituels.';
+					el.insertBefore(warning, el.firstChild);
+				}, 0);
 			},
 			// Bascule automatique de vue au redimensionnement (desktop <-> mobile).
 			windowResize: function () {
