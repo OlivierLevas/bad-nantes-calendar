@@ -80,25 +80,22 @@
 	color: var(--wp--preset--color--base, var(--bn-texte-clair));
 }
 
-/* Événements */
+/* Événements.
+   --bn-event-bg / --bn-event-fg sont posées par bn-init.js (eventDidMount) à partir
+   de la couleur de l'agenda d'origine ; sans agenda coloré, on retombe sur la charte
+   du club. Pas d'alternance de teinte ici : la couleur d'un événement ne dit plus
+   qu'une chose, de quel agenda il vient. */
 .bn-calendar .fc-event,
 .bn-calendar .fc-event .fc-event-main {
-	background-color: var(--bn-vert-fonce);
-	border-color: var(--bn-vert-fonce);
-	color: var(--bn-citron);
+	background-color: var(--bn-event-bg, var(--bn-vert-fonce));
+	border-color: var(--bn-event-bg, var(--bn-vert-fonce));
+	color: var(--bn-event-fg, var(--bn-citron));
 	border-radius: 0;
 }
 
 .bn-calendar .fc-event-title,
 .bn-calendar .fc-event-time {
-	color: var(--bn-citron);
-}
-
-/* Alternance de teinte pour aérer visuellement (un événement sur deux) */
-.bn-calendar .fc-event:nth-of-type(even),
-.bn-calendar .fc-event:nth-of-type(even) .fc-event-main {
-	background-color: var(--bn-vert-clair);
-	border-color: var(--bn-vert-clair);
+	color: var(--bn-event-fg, var(--bn-citron));
 }
 
 /* Événements daygrid (mois/semaine) : pas de marge autour. !important requis pour
@@ -114,10 +111,10 @@
 	line-height: 1.25;
 	/* Autorise le retour à la ligne (FullCalendar force nowrap sur certaines vues). */
 	white-space: normal;
-	/* Fond = couleur accent-1 du thème (fallback vert club si le preset est absent). */
-	background-color: var(--wp--preset--color--accent-1, var(--bn-vert-fonce));
-	/* Texte = couleur base du thème (fallback texte clair). */
-	color: var(--wp--preset--color--base, var(--bn-texte-clair));
+	/* Fond = couleur de l'agenda, sinon accent-1 du thème (fallback vert club). */
+	background-color: var(--bn-event-bg, var(--wp--preset--color--accent-1, var(--bn-vert-fonce)));
+	/* Texte = couleur lisible sur ce fond, sinon base du thème (fallback texte clair). */
+	color: var(--bn-event-fg, var(--wp--preset--color--base, var(--bn-texte-clair)));
 }
 
 .bn-calendar .bn-event-time {
@@ -184,16 +181,19 @@
 	border-radius: 3px;
 }
 
-/* En vue liste, le fond est clair : on repasse en vert foncé pour la lisibilité */
+/* Vue liste : la pastille .bn-event garde le fond de son agenda, donc le texte doit
+   suivre la couleur calculée pour ce fond. Sans agenda coloré, on retombe sur le vert
+   foncé d'origine, lisible sur le fond clair de la liste. */
 .bn-calendar .fc-list-event .bn-event-time,
 .bn-calendar .fc-list-event .bn-event-title,
 .bn-calendar .fc-list-event .bn-event-location {
-	color: var(--bn-vert-fonce);
+	color: var(--bn-event-fg, var(--bn-vert-fonce));
 }
 
-/* Pastille de couleur des événements en vue liste : masquée */
+/* Pastille de couleur de la vue liste : laissée visible, c'est l'indicateur
+   d'agenda que FullCalendar dessine gratuitement à partir de la couleur de source. */
 .bn-calendar .fc-list-event-dot {
-	display: none;
+	border-color: var(--bn-event-bg, var(--bn-vert-fonce));
 }
 
 /* Titre du calendrier */
@@ -260,10 +260,6 @@
 	font-weight: 600;
 }
 
-.bn-calendar .fc-list-event-dot {
-	border-color: var(--bn-vert-fonce);
-}
-
 /* Responsive : barre d'outils empilée sur petit écran */
 @media (max-width: 600px) {
 	.bn-calendar .fc-toolbar.fc-header-toolbar {
@@ -274,6 +270,60 @@
 	.bn-calendar .fc-toolbar-title {
 		font-size: 1.2rem;
 	}
+}
+
+/* Légende cliquable : elle nomme les agendas et sert de filtre. Construite par
+   bn-init.js, donc absente si le JS échoue — et absente aussi s'il n'y a qu'un
+   seul agenda, où elle n'apprendrait rien. */
+.bn-calendar-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 14px;
+	margin-bottom: 10px;
+}
+
+.bn-calendar-legend .bn-legend-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	/* Cible de clic confortable au doigt, sans grossir le texte. */
+	min-height: 32px;
+	padding: 4px 6px;
+	border: 0;
+	border-radius: var(--bn-radius);
+	background: none;
+	color: inherit;
+	font: inherit;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.bn-calendar-legend .bn-legend-item:focus-visible {
+	outline: 2px solid var(--wp--preset--color--accent-1, var(--bn-vert-fonce));
+	outline-offset: 1px;
+}
+
+.bn-calendar-legend .bn-legend-dot {
+	flex: none;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	/* Bordure toujours dessinée : elle sert de contour quand l'agenda est masqué. */
+	border: 2px solid var(--bn-legend-color, var(--wp--preset--color--accent-1, var(--bn-vert-fonce)));
+	background-color: var(--bn-legend-color, var(--wp--preset--color--accent-1, var(--bn-vert-fonce)));
+}
+
+/* Agenda masqué : pastille en contour seul, libellé estompé et barré. */
+.bn-calendar-legend .bn-legend-item.is-off {
+	opacity: 0.55;
+}
+
+.bn-calendar-legend .bn-legend-item.is-off .bn-legend-dot {
+	background-color: transparent;
+}
+
+.bn-calendar-legend .bn-legend-item.is-off .bn-legend-label {
+	text-decoration: line-through;
 }
 
 /* Créneaux rendus par PHP.
@@ -316,4 +366,10 @@
 .bn-slot-location {
 	font-size: 0.9em;
 	opacity: 0.95;
+}
+
+/* Agenda d'origine du créneau, affiché seulement quand il y en a plusieurs. */
+.bn-slot-cal {
+	font-size: 0.85em;
+	opacity: 0.85;
 }

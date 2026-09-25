@@ -4,7 +4,7 @@
  * Chaque conteneur .bn-calendar porte sa configuration dans un attribut
  * data-config (JSON). Ce choix évite toute dépendance à l'ordre de chargement
  * des scripts et fonctionne sur tous les thèmes (classiques, FSE, page builders).
- * Aucune donnée sensible : le flux ICS est public.
+ * Aucune donnée sensible : les flux ICS sont publics.
  */
 (function () {
 	'use strict';
@@ -42,6 +42,32 @@
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * Choisit une couleur de texte lisible sur un fond donné.
+	 *
+	 * La couleur de chaque agenda est libre : sans ce calcul, un fond clair
+	 * rendrait le texte blanc du thème illisible. Luminance perçue (ITU-R BT.601).
+	 *
+	 * @param {string} background Couleur de fond, au format #rgb ou #rrggbb.
+	 * @return {string} '#111' sur fond clair, '#fff' sur fond sombre.
+	 */
+	function readableTextColor(background) {
+		var hex = String(background || '').replace('#', '');
+
+		if (hex.length === 3) {
+			hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+		}
+		if (hex.length !== 6) {
+			return '';
+		}
+
+		var r = parseInt(hex.slice(0, 2), 16);
+		var g = parseInt(hex.slice(2, 4), 16);
+		var b = parseInt(hex.slice(4, 6), 16);
+
+		return (r * 299 + g * 587 + b * 114) / 1000 > 140 ? '#111' : '#fff';
 	}
 
 	/**
@@ -83,6 +109,146 @@
 	}
 
 	/**
+	 * Construit les sources d'événements : un agenda = une source, donc une URL de
+	 * proxy distincte (le connecteur iCalendar indexe son cache par URL).
+	 *
+	 * @param {Object}   config Configuration de l'instance.
+	 * @param {Function} report Rappel (slug, ok) signalant l'état d'un flux.
+	 * @return {Array} Descripteurs de sources FullCalendar.
+	 */
+	function buildSources(config, report) {
+		var sources = [];
+
+		for (var i = 0; i < config.calendars.length; i++) {
+			var calendar = config.calendars[i];
+			var source = {
+				id: calendar.slug,
+				url: calendar.url,
+				format: 'ics',
+				// État suivi flux par flux : avec plusieurs agendas, un rapport
+				// global ferait effacer l'avertissement d'un flux en panne par le
+				// premier flux voisin qui répond.
+				failure: makeStateReporter(report, calendar.slug, false),
+				success: makeStateReporter(report, calendar.slug, true)
+			};
+
+			// Sans couleur choisie, on n'en impose aucune : le CSS applique le thème.
+			if (calendar.color) {
+				source.color = calendar.color;
+			}
+			sources.push(source);
+		}
+
+		return sources;
+	}
+
+	/**
+	 * Fabrique un rappel de succès/échec pour une source donnée.
+	 *
+	 * Fonction séparée pour ne pas capturer la variable de boucle de buildSources
+	 * (ES5 : `var` n'a pas de portée de bloc).
+	 *
+	 * @param {Function} report Rappel (slug, ok).
+	 * @param {string}   slug   Identifiant de l'agenda.
+	 * @param {boolean}  ok     État à signaler.
+	 * @return {Function} Rappel à passer à FullCalendar.
+	 */
+	function makeStateReporter(report, slug, ok) {
+		return function (payload) {
+			report(slug, ok);
+			// success doit retourner les événements bruts ; failure ne retourne rien.
+			return ok ? payload : undefined;
+		};
+	}
+
+	/**
+	 * Construit la légende cliquable, qui sert aussi de filtre.
+	 *
+	 * Tous les agendas sont visibles au chargement ; un clic masque ou remontre
+	 * celui de l'entrée. Les entrées sont créées en JS : si le script échoue, on ne
+	 * laisse pas au visiteur des boutons inertes.
+	 *
+	 * @param {Object}      config   Configuration de l'instance.
+	 * @param {Object}      calendar Instance FullCalendar.
+	 * @param {Array}       sources  Descripteurs passés à FullCalendar.
+	 * @param {HTMLElement} el       Conteneur du calendrier.
+	 * @param {Function}    setHidden Rappel (slug, isHidden) notant le masquage.
+	 */
+	function buildLegend(config, calendar, sources, el, setHidden) {
+		// Avec un seul agenda, il n'y a rien à distinguer ni à filtrer.
+		if (sources.length < 2) {
+			return;
+		}
+
+		var legend = document.createElement('div');
+		legend.className = 'bn-calendar-legend';
+		legend.setAttribute('role', 'group');
+		if (config.i18n && config.i18n.legendLabel) {
+			legend.setAttribute('aria-label', config.i18n.legendLabel);
+		}
+
+		for (var i = 0; i < sources.length; i++) {
+			legend.appendChild(buildLegendButton(config.calendars[i], sources[i], calendar, setHidden));
+		}
+
+		el.parentNode.insertBefore(legend, el);
+	}
+
+	/**
+	 * Construit une entrée de légende : pastille de couleur + nom de l'agenda.
+	 *
+	 * Le filtrage retire et remet la source plutôt que de masquer ses événements en
+	 * CSS : la grille se recompose alors correctement (dont le compteur « +N »). Le
+	 * rechargement est servi par le cache HTTP du proxy.
+	 *
+	 * @param {Object}   entry     Agenda ({ slug, label, color }).
+	 * @param {Object}   source    Descripteur de source correspondant.
+	 * @param {Object}   calendar  Instance FullCalendar.
+	 * @param {Function} setHidden Rappel (slug, isHidden) notant le masquage.
+	 * @return {HTMLElement}
+	 */
+	function buildLegendButton(entry, source, calendar, setHidden) {
+		var button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'bn-legend-item';
+		button.setAttribute('aria-pressed', 'true');
+
+		var dot = document.createElement('span');
+		dot.className = 'bn-legend-dot';
+		if (entry.color) {
+			dot.style.setProperty('--bn-legend-color', entry.color);
+		}
+		button.appendChild(dot);
+
+		var label = document.createElement('span');
+		label.className = 'bn-legend-label';
+		label.textContent = entry.label;
+		button.appendChild(label);
+
+		button.addEventListener('click', function () {
+			var visible = 'true' === button.getAttribute('aria-pressed');
+
+			if (visible) {
+				var current = calendar.getEventSourceById(source.id);
+				if (current) {
+					current.remove();
+				}
+			} else {
+				calendar.addEventSource(source);
+			}
+
+			// Un agenda masqué ne doit plus peser sur l'avertissement « flux
+			// injoignable » : sa requête en vol peut encore échouer après coup.
+			setHidden(source.id, visible);
+
+			button.setAttribute('aria-pressed', visible ? 'false' : 'true');
+			button.classList.toggle('is-off', visible);
+		});
+
+		return button;
+	}
+
+	/**
 	 * Initialise un conteneur de calendrier.
 	 *
 	 * @param {HTMLElement} el Élément conteneur.
@@ -102,8 +268,8 @@
 			return;
 		}
 
-		// Message clair si la configuration est incomplète (aucune URL ICS enregistrée).
-		if (!config.configured || !config.icsUrl) {
+		// Message clair si la configuration est incomplète (aucun flux ICS enregistré).
+		if (!config.configured || !config.calendars || !config.calendars.length) {
 			el.textContent = config.i18n && config.i18n.missingConfig ? config.i18n.missingConfig : 'Agenda non configuré.';
 			return;
 		}
@@ -121,9 +287,62 @@
 		// On le vide avant de laisser FullCalendar prendre la place.
 		el.textContent = '';
 
-		// Avertissement affiché en cas de flux injoignable, retiré dès qu'il répond.
-		// Mémorisé ici pour n'en afficher qu'un seul, quel que soit le nombre de refetchs.
+		// Avertissement affiché tant qu'au moins un flux est injoignable (proxy en
+		// panne, requête bloquée par un filtrage réseau, réponse illisible…). Sans ce
+		// message, FullCalendar s'affiche parfaitement vide et sans la moindre
+		// explication. On se contente d'avertir au-dessus du calendrier : celui-ci
+		// reste vivant, donc la navigation refetche les flux et l'agenda se remplit
+		// dès qu'ils répondent.
 		var warningEl = null;
+		// Agendas actuellement en échec, par slug : l'avertissement disparaît quand
+		// le dernier d'entre eux se remet à répondre, pas au premier flux qui répond.
+		var failed = {};
+		// Agendas masqués depuis la légende : leur état n'a plus à être signalé.
+		var hidden = {};
+
+		/**
+		 * Note l'état d'un flux et met l'avertissement à jour en conséquence.
+		 *
+		 * @param {string}  slug Identifiant de l'agenda.
+		 * @param {boolean} ok   Vrai si le flux a répondu.
+		 */
+		function reportSourceState(slug, ok) {
+			// Retirer une source n'annule pas sa requête en vol : l'échec d'un agenda
+			// que le visiteur vient de masquer ne doit pas ressusciter l'avertissement.
+			if (!ok && hidden[slug]) {
+				return;
+			}
+
+			if (ok) {
+				delete failed[slug];
+			} else {
+				failed[slug] = true;
+				if (window.console && window.console.error) {
+					window.console.error('Bad’Nantes Calendar : flux ICS injoignable (' + slug + ').');
+				}
+			}
+
+			var broken = false;
+			for (var key in failed) {
+				if (Object.prototype.hasOwnProperty.call(failed, key)) {
+					broken = true;
+					break;
+				}
+			}
+
+			if (broken && !warningEl) {
+				warningEl = document.createElement('p');
+				warningEl.className = 'bn-calendar-error';
+				warningEl.textContent = (config.i18n && config.i18n.loadError) ||
+					'Agenda momentanément indisponible, réessayez plus tard.';
+				el.parentNode.insertBefore(warningEl, el);
+			} else if (!broken && warningEl) {
+				warningEl.parentNode.removeChild(warningEl);
+				warningEl = null;
+			}
+		}
+
+		var sources = buildSources(config, reportSourceState);
 
 		var calendar = new FullCalendar.Calendar(el, {
 			initialView: currentView,
@@ -140,44 +359,32 @@
 			eventContent: function (arg) {
 				return { domNodes: [buildEventNode(arg, config)] };
 			},
+			// Couleur de l'agenda d'origine, posée en variables CSS sur l'élément
+			// de l'événement : la pastille, la bordure et le liseré dessinés par
+			// FullCalendar en héritent d'un coup. Sans couleur configurée, le CSS
+			// garde celle du thème.
+			eventDidMount: function (arg) {
+				var background = arg.backgroundColor;
+
+				if (!background) {
+					return;
+				}
+
+				arg.el.style.setProperty('--bn-event-bg', background);
+
+				var foreground = readableTextColor(background);
+				if (foreground) {
+					arg.el.style.setProperty('--bn-event-fg', foreground);
+				}
+			},
 			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',
 				right: 'dayGridMonth,dayGridWeek,listWeek'
 			},
-			// Source iCalendar servie par le proxy PHP (same-origin, pas de CORS).
-			events: {
-				url: config.icsUrl,
-				format: 'ics'
-			},
-			// Flux injoignable (proxy en panne, requête bloquée par un filtrage
-			// réseau, réponse illisible…). Sans ce message, FullCalendar s'affiche
-			// parfaitement vide et sans la moindre explication. On se contente
-			// d'avertir au-dessus du calendrier : celui-ci reste vivant, donc la
-			// navigation refetche le flux et l'agenda se remplit dès qu'il répond.
-			eventSourceFailure: function (error) {
-				if (window.console && window.console.error) {
-					window.console.error('Bad’Nantes Calendar : flux ICS injoignable.', error);
-				}
-
-				if (warningEl) {
-					return;
-				}
-
-				warningEl = document.createElement('p');
-				warningEl.className = 'bn-calendar-error';
-				warningEl.textContent = (config.i18n && config.i18n.loadError) ||
-					'Agenda momentanément indisponible, réessayez plus tard.';
-				el.parentNode.insertBefore(warningEl, el);
-			},
-			// Le flux répond de nouveau (navigation, refetch) : on retire l'avertissement.
-			eventSourceSuccess: function (rawEvents) {
-				if (warningEl) {
-					warningEl.parentNode.removeChild(warningEl);
-					warningEl = null;
-				}
-				return rawEvents;
-			},
+			// Une source iCalendar par agenda, servie par le proxy PHP (same-origin,
+			// pas de CORS). Elles s'affichent toutes en même temps dans la grille.
+			eventSources: sources,
 			// Bascule automatique de vue au redimensionnement (desktop <-> mobile).
 			windowResize: function () {
 				var target = pickView(config);
@@ -188,7 +395,25 @@
 			}
 		});
 
+		/**
+		 * Note qu'un agenda vient d'être masqué ou remontré depuis la légende.
+		 *
+		 * @param {string}  slug     Identifiant de l'agenda.
+		 * @param {boolean} isHidden Vrai s'il vient d'être masqué.
+		 */
+		function setSourceHidden(slug, isHidden) {
+			if (isHidden) {
+				hidden[slug] = true;
+				reportSourceState(slug, true);
+			} else {
+				delete hidden[slug];
+			}
+		}
+
 		calendar.render();
+
+		// Après render() : la légende se place juste avant le calendrier rendu.
+		buildLegend(config, calendar, sources, el, setSourceHidden);
 	}
 
 	/**

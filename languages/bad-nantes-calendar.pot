@@ -2,9 +2,9 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Bad'Nantes Calendar 1.0.0\n"
+"Project-Id-Version: Bad'Nantes Calendar 1.1.0\n"
 "Report-Msgid-Bugs-To: https://github.com/OlivierLevas/bad-nantes-calendar/issues\n"
-"POT-Creation-Date: 2026-07-12 00:00+0000\n"
+"POT-Creation-Date: 2026-09-25 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,82 +14,156 @@ msgstr ""
 "Language: fr\n"
 "X-Domain: bad-nantes-calendar\n"
 
-#: includes/class-bn-settings.php
+#: includes/class-bn-settings.php:101 includes/class-bn-settings.php:102
 msgid "Bad'Nantes Calendar"
 msgstr ""
 
-#: includes/class-bn-settings.php
-msgid "Configuration du flux d'agenda (ICS)"
+#: includes/class-bn-settings.php:127
+msgid "Agendas (flux ICS)"
 msgstr ""
 
-#: includes/class-bn-settings.php
-msgid "URL du flux ICS"
+#: includes/class-bn-settings.php:134
+msgid "Agendas"
 msgstr ""
 
-#: includes/class-bn-settings.php
+#: includes/class-bn-settings.php:142
+msgid "Affichage"
+msgstr ""
+
+#: includes/class-bn-settings.php:149
 msgid "Vue par défaut sur mobile"
 msgstr ""
 
-#: includes/class-bn-settings.php
-msgid "Le flux doit être public. Il est récupéré côté serveur (avec cache) : pas de problème de CORS."
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "Liste"
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "Mois"
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "Vue affichée automatiquement sur petit écran (moins de 600px)."
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "Collez l'URL publique du flux iCal (ICS) de votre agenda. Aucune clé API n'est nécessaire. Consultez le README pour trouver cette URL (Google, Outlook, Nextcloud…)."
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "Utilisation"
-msgstr ""
-
-#: includes/class-bn-settings.php
-msgid "Insérez un des shortcodes suivants dans une page ou un article :"
-msgstr ""
-
-#: includes/class-bn-settings.php
+#: includes/class-bn-settings.php:158
 msgid "Contenu HTML par lieu"
 msgstr ""
 
-#: includes/class-bn-settings.php
+#: includes/class-bn-settings.php:165
+msgid "Gabarit d'affichage"
+msgstr ""
+
+#: includes/class-bn-settings.php:173
 msgid "Lieux"
 msgstr ""
 
-#: includes/class-bn-settings.php
-msgid "Associez un contenu HTML à un lieu. Il s'affiche sous le titre de l'événement quand le champ « Lieu » de l'agenda contient le texte indiqué (insensible à la casse). Laissez vide si vous n'en avez pas besoin."
+#. translators: %d : numéro de l'agenda dans la liste.
+#: includes/class-bn-settings.php:215
+msgid "Agenda %d"
 msgstr ""
 
-#: includes/class-bn-settings.php
+#: includes/class-bn-settings.php:300
+msgid "Réglages communs à tous les agendas."
+msgstr ""
+
+#: includes/class-bn-settings.php:307
+msgid "Ajoutez autant d'agendas que nécessaire : ils s'affichent tous en même temps dans le calendrier, chacun dans sa couleur. Une légende cliquable permet au visiteur de masquer ceux qui ne l'intéressent pas."
+msgstr ""
+
+#: includes/class-bn-settings.php:308
+msgid "Chaque flux doit être public. Aucune clé API n'est nécessaire : les flux sont récupérés côté serveur (avec cache), donc sans problème de CORS. Consultez le README pour trouver l'URL du flux iCal (Google, Outlook, Nextcloud…)."
+msgstr ""
+
+#: includes/class-bn-settings.php:326
+msgid "+ Ajouter un agenda"
+msgstr ""
+
+#: includes/class-bn-settings.php:347
+msgid "Nom affiché dans la légende"
+msgstr ""
+
+#: includes/class-bn-settings.php:348
+msgid "Ex. : Entraînements"
+msgstr ""
+
+#: includes/class-bn-settings.php:353
+msgid "URL du flux ICS"
+msgstr ""
+
+#: includes/class-bn-settings.php:359
+msgid "Couleur des événements"
+msgstr ""
+
+#: includes/class-bn-settings.php:364
+msgid "Supprimer cet agenda"
+msgstr ""
+
+#: includes/class-bn-settings.php:374
+msgid "Le même gabarit d'affichage est appliqué à chaque lieu : vous ne saisissez que le nom, l'adresse et le lien Google Maps. Le bloc s'affiche sous le titre de l'événement quand le champ « Lieu » de l'agenda contient le mot-clé indiqué (insensible à la casse)."
+msgstr ""
+
+#: includes/class-bn-settings.php:388
+msgid "Variables disponibles : <code>{{nom}}</code>, <code>{{adresse}}</code>, <code>{{lien}}</code> (URL Google Maps). Elles sont remplacées par les valeurs de chaque lieu ci-dessous."
+msgstr ""
+
+#: includes/class-bn-settings.php:408
 msgid "+ Ajouter un lieu"
 msgstr ""
 
-#: includes/class-bn-settings.php
-msgid "Lieu (texte à repérer)"
+#: includes/class-bn-settings.php:430
+msgid "Mot-clé à repérer (dans le champ Lieu de l'agenda)"
 msgstr ""
 
-#: includes/class-bn-settings.php
-msgid "Ex. : Dervallières"
+#: includes/class-bn-settings.php:431
+msgid "Ex. : Victor Hugo"
 msgstr ""
 
-#: includes/class-bn-settings.php
-msgid "Contenu HTML"
+#: includes/class-bn-settings.php:436
+msgid "Nom du lieu"
 msgstr ""
 
-#: includes/class-bn-settings.php
+#: includes/class-bn-settings.php:437
+msgid "Ex. : Gymnase Victor Hugo"
+msgstr ""
+
+#: includes/class-bn-settings.php:442
+msgid "Adresse"
+msgstr ""
+
+#: includes/class-bn-settings.php:443
+msgid "Ex. : 12 rue Victor Hugo, 44000 Nantes"
+msgstr ""
+
+#: includes/class-bn-settings.php:448
+msgid "Lien Google Maps"
+msgstr ""
+
+#: includes/class-bn-settings.php:453
 msgid "Supprimer ce lieu"
 msgstr ""
 
-#: includes/class-bn-shortcode.php
-msgid "Agenda non configuré : renseignez l'URL du flux ICS dans les réglages."
+#: includes/class-bn-settings.php:466
+msgid "Liste"
+msgstr ""
+
+#: includes/class-bn-settings.php:467
+msgid "Mois"
+msgstr ""
+
+#: includes/class-bn-settings.php:480
+msgid "Vue affichée automatiquement sur petit écran (moins de 600px)."
+msgstr ""
+
+#: includes/class-bn-settings.php:502
+msgid "Utilisation"
+msgstr ""
+
+#: includes/class-bn-settings.php:503
+msgid "Insérez un des shortcodes suivants dans une page ou un article :"
+msgstr ""
+
+#: includes/class-bn-shortcode.php:189
+msgid "Agenda non configuré : ajoutez au moins un flux ICS dans les réglages."
+msgstr ""
+
+#: includes/class-bn-shortcode.php:190
+msgid "Agenda momentanément indisponible, réessayez plus tard."
+msgstr ""
+
+#: includes/class-bn-shortcode.php:191
+msgid "Agendas affichés"
+msgstr ""
+
+#. translators: 1: jour et date (ex. « mardi 14 juillet »), 2: heure de début, 3: heure de fin.
+#: includes/class-bn-shortcode.php:251
+msgid "%1$s de %2$s à %3$s"
 msgstr ""

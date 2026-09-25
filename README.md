@@ -1,9 +1,14 @@
 # Bad'Nantes Calendar
 
-Plugin WordPress maison du club de badminton **Bad'Nantes**. Il affiche un
-agenda Google **public** via [FullCalendar 6](https://fullcalendar.io/),
-en **vue mois** ou **vue semaine** (grille horaire), avec bascule automatique
-en **vue liste** sur mobile.
+Plugin WordPress maison du club de badminton **Bad'Nantes**. Il affiche un ou
+plusieurs agendas **publics** via [FullCalendar 6](https://fullcalendar.io/),
+en **vue mois** ou **vue semaine**, avec bascule automatique en **vue liste**
+sur mobile.
+
+Les agendas s'affichent **tous en même temps dans la même grille**, chacun dans
+sa couleur. Une **légende cliquable** au-dessus du calendrier les nomme et sert
+de filtre : tout est visible au chargement, un clic masque ou remontre un
+agenda.
 
 FullCalendar est **embarqué en local** dans le plugin : aucune dépendance à un
 CDN au moment de l'exécution.
@@ -16,13 +21,19 @@ CDN au moment de l'exécution.
    installez-le depuis **Extensions → Ajouter → Téléverser une extension**.
 2. Activez le plugin.
 3. Allez dans **Réglages → Bad'Nantes Calendar** et renseignez :
-   - **URL du flux ICS** (agenda public au format iCal)
+   - **Agendas** : autant de lignes que d'agendas à afficher, chacune avec un
+     **nom** (celui de la légende), l'**URL de son flux ICS** et une **couleur**
    - **Vue par défaut sur mobile** (liste ou mois)
 
-> **Aucune clé API n'est nécessaire.** Le plugin lit un flux **ICS public**.
-> Le flux est récupéré **côté serveur** par un petit proxy PHP (avec cache de
-> 15 min), ce qui évite les problèmes de CORS des flux publics (Google, etc.)
-> et n'expose aucune donnée sensible.
+> ⚠️ **Mise à jour depuis une version antérieure à la 1.1.0 :** les agendas
+> doivent être **ressaisis**. L'ancien réglage « URL du flux ICS » n'est pas
+> repris automatiquement, et le calendrier reste vide tant qu'aucun agenda n'est
+> enregistré.
+
+> **Aucune clé API n'est nécessaire.** Le plugin lit des flux **ICS publics**.
+> Chaque flux est récupéré **côté serveur** par un petit proxy PHP (avec cache de
+> 15 min par agenda), ce qui évite les problèmes de CORS des flux publics
+> (Google, etc.) et n'expose aucune donnée sensible.
 
 ### Où trouver l'URL du flux ICS ?
 
@@ -42,8 +53,9 @@ Publier* → copiez le lien **ICS**.
 **Nextcloud / Framagenda :** menu de l'agenda → **Lien de partage** →
 **S'abonner via un lien** (`.ics`).
 
-Collez cette URL dans le champ **URL du flux ICS** des réglages. Elle peut
-aussi commencer par `webcal://` (normalisée automatiquement en `https://`).
+Collez cette URL dans le champ **URL du flux ICS** de la ligne d'agenda
+correspondante. Elle peut aussi commencer par `webcal://` (normalisée
+automatiquement en `https://`). Répétez l'opération pour chaque agenda.
 
 ---
 
@@ -61,7 +73,7 @@ ajoutez un **bloc « Code court »** (Shortcode) puis collez :
 ```
 
 - `view="mois"` → vue `dayGridMonth`
-- `view="semaine"` → vue `timeGridWeek`
+- `view="semaine"` → vue `dayGridWeek`
 - Attribut absent → `mois` par défaut
 
 Le calendrier ne s'affiche pas dans l'éditeur : utilisez la

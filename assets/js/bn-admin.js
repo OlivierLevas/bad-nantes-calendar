@@ -1,16 +1,23 @@
 /**
- * Répéteur « Lieu → contenu HTML » de la page de réglages Bad'Nantes Calendar.
+ * Répéteurs de la page de réglages Bad'Nantes Calendar (agendas, lieux).
  *
  * Ajoute / supprime des lignes. Les champs utilisent des tableaux parallèles
- * (locations[match][] et locations[html][]) : aucun index à gérer côté JS.
+ * (calendars[url][], locations[match][]…) : aucun index à gérer côté JS.
  */
 (function () {
 	'use strict';
 
-	function ready() {
-		var repeater = document.getElementById('bn-locations-repeater');
-		var addBtn = document.getElementById('bn-add-location');
-		var template = document.getElementById('bn-location-row-template');
+	/**
+	 * Câble un répéteur : bouton d'ajout qui clone un <template>, et suppression
+	 * de ligne par délégation d'événement.
+	 *
+	 * @param {Object} ids Identifiants et classes du répéteur :
+	 *                     { repeater, addButton, template, row, remove }.
+	 */
+	function initRepeater(ids) {
+		var repeater = document.getElementById(ids.repeater);
+		var addBtn = document.getElementById(ids.addButton);
+		var template = document.getElementById(ids.template);
 
 		if (!repeater || !addBtn || !template) {
 			return;
@@ -24,14 +31,32 @@
 
 		// Suppression d'une ligne (délégation d'événement).
 		repeater.addEventListener('click', function (e) {
-			if (!e.target.classList.contains('bn-remove-location')) {
+			if (!e.target.classList.contains(ids.remove)) {
 				return;
 			}
 			e.preventDefault();
-			var row = e.target.closest('.bn-location-row');
+			var row = e.target.closest('.' + ids.row);
 			if (row) {
 				row.parentNode.removeChild(row);
 			}
+		});
+	}
+
+	function ready() {
+		initRepeater({
+			repeater: 'bn-calendars-repeater',
+			addButton: 'bn-add-calendar',
+			template: 'bn-calendar-row-template',
+			row: 'bn-calendar-row',
+			remove: 'bn-remove-calendar'
+		});
+
+		initRepeater({
+			repeater: 'bn-locations-repeater',
+			addButton: 'bn-add-location',
+			template: 'bn-location-row-template',
+			row: 'bn-location-row',
+			remove: 'bn-remove-location'
 		});
 	}
 

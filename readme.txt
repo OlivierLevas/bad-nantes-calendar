@@ -4,16 +4,18 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.21
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Affiche un agenda public (flux ICS) du club Bad'Nantes avec FullCalendar 6, en vue semaine ou vue mois. FullCalendar est embarqué en local.
+Affiche un ou plusieurs agendas publics (flux ICS) du club Bad'Nantes avec FullCalendar 6, en vue semaine ou vue mois. FullCalendar est embarqué en local.
 
 == Description ==
 
-Bad'Nantes Calendar affiche un agenda public au format **iCal (ICS)** via
-FullCalendar 6 — compatible Google Agenda, Outlook, Nextcloud, etc.
+Bad'Nantes Calendar affiche un ou plusieurs agendas publics au format
+**iCal (ICS)** via FullCalendar 6 — compatible Google Agenda, Outlook,
+Nextcloud, etc. Les agendas s'affichent tous en même temps dans la même grille,
+chacun dans sa couleur.
 Deux vues sont disponibles au moyen d'un shortcode :
 
 * Vue mois (grille de jours)
@@ -21,7 +23,10 @@ Deux vues sont disponibles au moyen d'un shortcode :
 
 Caractéristiques :
 
-* Aucune clé API : un simple flux ICS public suffit.
+* Aucune clé API : de simples flux ICS publics suffisent.
+* Plusieurs agendas, chacun avec son nom et sa couleur, superposés dans une seule
+  grille. Une légende cliquable laisse le visiteur masquer ceux qui ne
+  l'intéressent pas.
 * Flux récupéré côté serveur (proxy PHP + cache) : pas de problème de CORS.
 * Événements récurrents (RRULE) et fuseaux gérés via ical.js.
 * FullCalendar 6 embarqué en local (aucune dépendance CDN au runtime).
@@ -41,7 +46,8 @@ Caractéristiques :
 
 1. Installez le plugin (zip) puis activez-le.
 2. Rendez-vous dans « Réglages → Bad'Nantes Calendar ».
-3. Collez l'URL du flux ICS public de votre agenda.
+3. Ajoutez vos agendas : pour chacun, un nom, l'URL de son flux ICS public et une
+   couleur.
 4. Réglez la vue par défaut sur mobile.
 5. Renseignez éventuellement les lieux (voir ci-dessous).
 6. Insérez un shortcode dans une page :
@@ -91,6 +97,24 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.1.0 =
+* Plusieurs agendas au lieu d'un seul : la page de réglages propose désormais une
+  liste d'agendas, chacun avec son nom, son flux ICS et sa couleur. Ils
+  s'affichent tous en même temps dans la même grille.
+* Une légende cliquable au-dessus du calendrier nomme les agendas et sert de
+  filtre : tout est visible au chargement, un clic masque ou remontre un agenda.
+  Elle n'apparaît qu'à partir de deux agendas.
+* La couleur du texte des événements est calculée à partir de la couleur de
+  l'agenda, pour rester lisible sur un fond clair comme sur un fond sombre.
+* L'alternance de teinte d'un événement sur deux est supprimée : la couleur d'un
+  événement indique maintenant son agenda, et rien d'autre.
+* Les créneaux rendus côté serveur (version lue par les moteurs de recherche) et
+  les données structurées `SportsClub` couvrent tous les agendas.
+* **Mise à jour depuis une version antérieure : les agendas doivent être
+  ressaisis.** L'ancien réglage « URL du flux ICS » n'est pas repris
+  automatiquement ; le calendrier reste vide jusqu'à ce qu'au moins un agenda
+  soit enregistré dans « Réglages → Bad'Nantes Calendar ».
 
 = 1.0.21 =
 * Le flux ICS est désormais servi par une route REST (`bad-nantes/v1/ics`) et non

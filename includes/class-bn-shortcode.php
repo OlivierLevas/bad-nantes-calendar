@@ -162,11 +162,23 @@ class BN_Shortcode {
 			);
 		}
 
-		// Configuration transmise au JS (aucune donnée sensible : le flux est public).
+		// Agendas transmis au JS : un par source FullCalendar, chacun avec sa propre
+		// URL de proxy (le connecteur iCalendar indexe son cache par URL).
+		$calendars = array();
+		foreach ( BN_Ics_Proxy::get_calendars() as $calendar ) {
+			$calendars[] = array(
+				'slug'  => $calendar['slug'],
+				'label' => $calendar['label'],
+				'color' => isset( $calendar['color'] ) ? $calendar['color'] : '',
+				'url'   => BN_Ics_Proxy::get_proxy_url( $calendar['slug'] ),
+			);
+		}
+
+		// Configuration transmise au JS (aucune donnée sensible : les flux sont publics).
 		$config = array(
 			'containerId'  => $container_id,
-			'icsUrl'       => BN_Ics_Proxy::get_proxy_url(),
-			'configured'   => ! empty( $options['ics_url'] ),
+			'calendars'    => $calendars,
+			'configured'   => array() !== $calendars,
 			'initialView'  => $initial_view,
 			'mobileView'   => $mobile_view,
 			'firstDay'     => 1,
@@ -174,8 +186,9 @@ class BN_Shortcode {
 			'mobileBreakpoint' => 600,
 			'locationHtml' => $locations,
 			'i18n'         => array(
-				'missingConfig' => __( "Agenda non configuré : renseignez l'URL du flux ICS dans les réglages.", 'bad-nantes-calendar' ),
+				'missingConfig' => __( "Agenda non configuré : ajoutez au moins un flux ICS dans les réglages.", 'bad-nantes-calendar' ),
 				'loadError'     => __( 'Agenda momentanément indisponible, réessayez plus tard.', 'bad-nantes-calendar' ),
+				'legendLabel'   => __( 'Agendas affichés', 'bad-nantes-calendar' ),
 			),
 		);
 
@@ -215,15 +228,22 @@ class BN_Shortcode {
 		}
 
 		$timezone = wp_timezone();
-		$items    = '';
+		// Avec un seul agenda, rappeler son nom sur chaque ligne n'apprend rien.
+		$show_calendar = count( BN_Ics_Proxy::get_calendars() ) > 1;
+		$items         = '';
 		foreach ( $occurrences as $occurrence ) {
 			$start = $occurrence['start'];
 			$end   = $occurrence['end'];
 
+			$calendar = '';
+			if ( $show_calendar && ! empty( $occurrence['calendar'] ) ) {
+				$calendar = '<div class="bn-slot-cal">' . esc_html( $occurrence['calendar'] ) . '</div>';
+			}
+
 			// Chaque partie est un élément de bloc : à l'extraction du texte, les
 			// robots séparent les lignes au lieu de coller « 19h30Créneau d'été ».
 			$items .= sprintf(
-				'<li class="bn-slot"><div class="bn-slot-time"><time datetime="%1$s">%2$s</time></div>%3$s%4$s</li>',
+				'<li class="bn-slot"><div class="bn-slot-time"><time datetime="%1$s">%2$s</time></div>%3$s%4$s%5$s</li>',
 				esc_attr( $start->format( DateTimeInterface::ATOM ) ),
 				esc_html(
 					sprintf(
@@ -235,7 +255,8 @@ class BN_Shortcode {
 					)
 				),
 				'' !== $occurrence['summary'] ? '<div class="bn-slot-title">' . esc_html( $occurrence['summary'] ) . '</div>' : '',
-				$this->render_location( $occurrence['location'], $options )
+				$this->render_location( $occurrence['location'], $options ),
+				$calendar
 			);
 		}
 

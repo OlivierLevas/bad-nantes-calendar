@@ -20,6 +20,11 @@ class BN_Settings {
 	const OPTION_NAME = 'bn_calendar_options';
 
 	/**
+	 * Couleur proposée par défaut pour un nouveau calendrier (vert club).
+	 */
+	const DEFAULT_COLOR = '#0d3b32';
+
+	/**
 	 * Enregistre les hooks admin.
 	 */
 	public function __construct() {
@@ -29,7 +34,7 @@ class BN_Settings {
 	}
 
 	/**
-	 * Charge le petit script du répéteur « Lieu → HTML », seulement sur notre page.
+	 * Charge le petit script des répéteurs (agendas, lieux), seulement sur notre page.
 	 *
 	 * @param string $hook_suffix Identifiant de la page admin courante.
 	 */
@@ -53,7 +58,8 @@ class BN_Settings {
 	 */
 	public static function get_options() {
 		$defaults = array(
-			'ics_url'             => '',
+			// Liste de tableaux : array( 'slug' => 'entrainements', 'label' => '…', 'url' => 'https://…ics', 'color' => '#rrggbb' ).
+			'calendars'           => array(),
 			'mobile_default_view' => 'liste',
 			// Gabarit HTML unique appliqué à chaque lieu (variables {{nom}} {{adresse}} {{lien}}).
 			'location_template'   => self::default_location_template(),
@@ -114,19 +120,28 @@ HTML;
 			)
 		);
 
+		// Section des agendas : elle vient en premier, c'est le réglage sans lequel
+		// le plugin n'affiche rien.
 		add_settings_section(
-			'bn_calendar_main_section',
-			__( "Configuration du flux d'agenda (ICS)", 'bad-nantes-calendar' ),
-			array( $this, 'render_section_intro' ),
+			'bn_calendar_calendars_section',
+			__( 'Agendas (flux ICS)', 'bad-nantes-calendar' ),
+			array( $this, 'render_calendars_intro' ),
 			'bn-calendar'
 		);
 
 		add_settings_field(
-			'ics_url',
-			__( "URL du flux ICS", 'bad-nantes-calendar' ),
-			array( $this, 'render_ics_url_field' ),
+			'calendars',
+			__( 'Agendas', 'bad-nantes-calendar' ),
+			array( $this, 'render_calendars_field' ),
 			'bn-calendar',
-			'bn_calendar_main_section'
+			'bn_calendar_calendars_section'
+		);
+
+		add_settings_section(
+			'bn_calendar_main_section',
+			__( 'Affichage', 'bad-nantes-calendar' ),
+			array( $this, 'render_section_intro' ),
+			'bn-calendar'
 		);
 
 		add_settings_field(
@@ -171,14 +186,82 @@ HTML;
 	public function sanitize_options( $input ) {
 		$output = self::get_options();
 
-		if ( isset( $input['ics_url'] ) ) {
-			$url = esc_url_raw( trim( $input['ics_url'] ), array( 'http', 'https', 'webcal' ) );
-			// webcal:// est un alias : on le normalise en https:// (le fetch serveur ne gère que http/https).
-			$output['ics_url'] = preg_replace( '#^webcal://#i', 'https://', $url );
+		// Réglage mono-agenda des versions <= 1.0.21 : remplacé par 'calendars'.
+		unset( $output['ics_url'] );
 
-			// L'URL a changé : on purge le cache du proxy.
-			delete_transient( BN_Ics_Proxy::TRANSIENT_KEY );
+		// Agendas : tableaux parallèles label[] / url[] / color[] issus du répéteur.
+		// Le slug est recalculé ici — il sert d'identifiant au proxy, de clé de cache
+		// et d'id de source côté FullCalendar.
+		$previous  = isset( $output['calendars'] ) ? (array) $output['calendars'] : array();
+		$calendars = array();
+		if ( isset( $input['calendars']['url'] ) && is_array( $input['calendars']['url'] ) ) {
+			$urls   = $input['calendars']['url'];
+			$labels = isset( $input['calendars']['label'] ) && is_array( $input['calendars']['label'] ) ? $input['calendars']['label'] : array();
+			$colors = isset( $input['calendars']['color'] ) && is_array( $input['calendars']['color'] ) ? $input['calendars']['color'] : array();
+			$known  = isset( $input['calendars']['slug'] ) && is_array( $input['calendars']['slug'] ) ? $input['calendars']['slug'] : array();
+			$slugs  = array();
+
+			foreach ( $urls as $i => $raw_url ) {
+				$url = esc_url_raw( trim( $raw_url ), array( 'http', 'https', 'webcal' ) );
+				// webcal:// est un alias : on le normalise en https:// (le fetch serveur ne gère que http/https).
+				$url = preg_replace( '#^webcal://#i', 'https://', $url );
+
+				// Sans flux, la ligne n'a rien à afficher : on l'ignore.
+				if ( '' === $url ) {
+					continue;
+				}
+
+				$label = isset( $labels[ $i ] ) ? sanitize_text_field( $labels[ $i ] ) : '';
+				if ( '' === $label ) {
+					/* translators: %d : numéro de l'agenda dans la liste. */
+					$label = sprintf( __( 'Agenda %d', 'bad-nantes-calendar' ), count( $calendars ) + 1 );
+				}
+
+				// Le slug est une identité durable : il est gravé dans les pages déjà
+				// servies (…/ics?cal=<slug>) et dans les clés de cache. On conserve
+				// donc celui du champ caché, et on n'en dérive un du nom qu'à la
+				// première saisie — sinon renommer un agenda casserait le flux pour
+				// toutes les pages encore en cache.
+				$slug = isset( $known[ $i ] ) ? sanitize_key( $known[ $i ] ) : '';
+				if ( '' === $slug ) {
+					// sanitize_key après sanitize_title : ce dernier peut laisser des
+					// séquences percent-encodées sur un nom non translittérable, que
+					// la lecture de ?cal= (même sanitize_key) ne retrouverait pas.
+					$slug = sanitize_key( sanitize_title( $label ) );
+				}
+				if ( '' === $slug ) {
+					$slug = 'agenda';
+				}
+
+				// Deux agendas peuvent porter le même nom : on dédoublonne pour que le
+				// slug reste un identifiant unique.
+
+				$base   = $slug;
+				$suffix = 2;
+				while ( isset( $slugs[ $slug ] ) ) {
+					$slug = $base . '-' . $suffix;
+					$suffix++;
+				}
+				$slugs[ $slug ] = true;
+
+				$color = isset( $colors[ $i ] ) ? sanitize_hex_color( trim( $colors[ $i ] ) ) : '';
+
+				$calendars[] = array(
+					'slug'  => $slug,
+					'label' => $label,
+					'url'   => $url,
+					// null si la valeur postée n'est pas une couleur hexadécimale valide :
+					// on retombe alors sur la couleur du thème, côté CSS.
+					'color' => is_string( $color ) ? $color : '',
+				);
+			}
 		}
+		$output['calendars'] = $calendars;
+
+		// Les flux ont pu changer d'URL, de nom (donc de slug) ou disparaître : on
+		// purge les caches des agendas enregistrés comme ceux qu'ils remplacent,
+		// pour ne pas laisser de transient orphelin ni de contenu périmé.
+		BN_Ics_Proxy::purge_cache( array_merge( $previous, $calendars ) );
 
 		if ( isset( $input['mobile_default_view'] ) ) {
 			$view = sanitize_text_field( $input['mobile_default_view'] );
@@ -230,20 +313,77 @@ HTML;
 	 * Texte d'introduction de la section.
 	 */
 	public function render_section_intro() {
-		echo '<p>' . esc_html__( "Collez l'URL publique du flux iCal (ICS) de votre agenda. Aucune clé API n'est nécessaire. Consultez le README pour trouver cette URL (Google, Outlook, Nextcloud…).", 'bad-nantes-calendar' ) . '</p>';
+		echo '<p>' . esc_html__( 'Réglages communs à tous les agendas.', 'bad-nantes-calendar' ) . '</p>';
 	}
 
 	/**
-	 * Champ URL du flux ICS.
+	 * Introduction de la section « Agendas ».
 	 */
-	public function render_ics_url_field() {
-		$options = self::get_options();
-		printf(
-			'<input type="url" name="%1$s[ics_url]" id="bn_ics_url" value="%2$s" class="large-text" placeholder="https://calendar.google.com/calendar/ical/.../public/basic.ics" autocomplete="off" />',
-			esc_attr( self::OPTION_NAME ),
-			esc_attr( $options['ics_url'] )
-		);
-		echo '<p class="description">' . esc_html__( "Le flux doit être public. Il est récupéré côté serveur (avec cache) : pas de problème de CORS.", 'bad-nantes-calendar' ) . '</p>';
+	public function render_calendars_intro() {
+		echo '<p>' . esc_html__( "Ajoutez autant d'agendas que nécessaire : ils s'affichent tous en même temps dans le calendrier, chacun dans sa couleur. Une légende cliquable permet au visiteur de masquer ceux qui ne l'intéressent pas.", 'bad-nantes-calendar' ) . '</p>';
+		echo '<p>' . esc_html__( "Chaque flux doit être public. Aucune clé API n'est nécessaire : les flux sont récupérés côté serveur (avec cache), donc sans problème de CORS. Consultez le README pour trouver l'URL du flux iCal (Google, Outlook, Nextcloud…).", 'bad-nantes-calendar' ) . '</p>';
+	}
+
+	/**
+	 * Répéteur « Agenda : nom + flux ICS + couleur ».
+	 */
+	public function render_calendars_field() {
+		$options   = self::get_options();
+		$empty_row = array( 'label' => '', 'url' => '', 'color' => self::DEFAULT_COLOR, 'slug' => '' );
+		$calendars = ! empty( $options['calendars'] ) ? $options['calendars'] : array( $empty_row );
+
+		echo '<div id="bn-calendars-repeater">';
+		foreach ( $calendars as $cal ) {
+			$cal = wp_parse_args( $cal, $empty_row );
+			$this->render_calendar_row( $cal['label'], $cal['url'], $cal['color'], $cal['slug'] );
+		}
+		echo '</div>';
+
+		echo '<p><button type="button" class="button" id="bn-add-calendar">' . esc_html__( '+ Ajouter un agenda', 'bad-nantes-calendar' ) . '</button></p>';
+
+		// Modèle de ligne vierge cloné par le JS admin.
+		echo '<template id="bn-calendar-row-template">';
+		$this->render_calendar_row( '', '', self::DEFAULT_COLOR );
+		echo '</template>';
+	}
+
+	/**
+	 * Affiche une ligne du répéteur d'agendas.
+	 *
+	 * @param string $label Nom affiché dans la légende.
+	 * @param string $url   URL du flux ICS.
+	 * @param string $color Couleur des événements de cet agenda.
+	 * @param string $slug  Identifiant déjà attribué ; vide pour une nouvelle ligne.
+	 */
+	private function render_calendar_row( $label, $url, $color, $slug = '' ) {
+		$name = self::OPTION_NAME;
+		?>
+		<div class="bn-calendar-row" style="margin-bottom:1em;padding:1em;border:1px solid #dcdcde;background:#fff;max-width:600px;">
+			<?php // Identifiant renvoyé tel quel : renommer l'agenda ne doit pas changer l'adresse de son flux. ?>
+			<input type="hidden" name="<?php echo esc_attr( $name ); ?>[calendars][slug][]" value="<?php echo esc_attr( $slug ); ?>" />
+			<p style="margin-top:0;">
+				<label>
+					<strong><?php esc_html_e( 'Nom affiché dans la légende', 'bad-nantes-calendar' ); ?></strong><br />
+					<input type="text" name="<?php echo esc_attr( $name ); ?>[calendars][label][]" value="<?php echo esc_attr( $label ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Ex. : Entraînements', 'bad-nantes-calendar' ); ?>" />
+				</label>
+			</p>
+			<p>
+				<label>
+					<strong><?php esc_html_e( 'URL du flux ICS', 'bad-nantes-calendar' ); ?></strong><br />
+					<input type="url" name="<?php echo esc_attr( $name ); ?>[calendars][url][]" value="<?php echo esc_attr( $url ); ?>" class="large-text" placeholder="https://calendar.google.com/calendar/ical/.../public/basic.ics" autocomplete="off" />
+				</label>
+			</p>
+			<p>
+				<label>
+					<strong><?php esc_html_e( 'Couleur des événements', 'bad-nantes-calendar' ); ?></strong><br />
+					<input type="color" name="<?php echo esc_attr( $name ); ?>[calendars][color][]" value="<?php echo esc_attr( '' !== $color ? $color : self::DEFAULT_COLOR ); ?>" />
+				</label>
+			</p>
+			<p style="margin-bottom:0;">
+				<button type="button" class="button-link bn-remove-calendar" style="color:#b32d2e;"><?php esc_html_e( 'Supprimer cet agenda', 'bad-nantes-calendar' ); ?></button>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**

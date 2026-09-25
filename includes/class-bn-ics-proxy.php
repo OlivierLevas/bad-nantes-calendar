@@ -35,14 +35,28 @@ class BN_Ics_Proxy {
 	const REST_ROUTE = '/ics';
 
 	/**
-	 * Clé du transient de cache.
+	 * Préfixe des clés de transient : un cache par agenda, suffixé par son slug.
 	 */
-	const TRANSIENT_KEY = 'bn_calendar_ics_cache';
+	const TRANSIENT_PREFIX = 'bn_calendar_ics_';
+
+	/**
+	 * Clé du transient mono-agenda des versions <= 1.0.21, purgée par purge_cache().
+	 */
+	const LEGACY_TRANSIENT_KEY = 'bn_calendar_ics_cache';
 
 	/**
 	 * Durée du cache en secondes (15 minutes).
 	 */
 	const CACHE_TTL = 900;
+
+	/**
+	 * Durée pendant laquelle un flux en panne est mémorisé comme tel (2 minutes).
+	 *
+	 * Sans elle, chaque affichage de page relance un wp_remote_get de 15 s par
+	 * agenda injoignable — et le schema.org fait le sien sur toutes les pages du
+	 * site, pas seulement celles qui portent le shortcode.
+	 */
+	const FAILURE_TTL = 120;
 
 	/**
 	 * Enregistre l'endpoint pour les visiteurs connectés et anonymes.
@@ -82,10 +96,59 @@ class BN_Ics_Proxy {
 	/**
 	 * Retourne l'URL publique du proxy à passer au front.
 	 *
+	 * @param string $slug Identifiant de l'agenda ; vide pour l'URL sans paramètre.
 	 * @return string
 	 */
-	public static function get_proxy_url() {
-		return rest_url( self::REST_NAMESPACE . self::REST_ROUTE );
+	public static function get_proxy_url( $slug = '' ) {
+		$url = rest_url( self::REST_NAMESPACE . self::REST_ROUTE );
+
+		// Un agenda = une URL distincte : le connecteur iCalendar de FullCalendar
+		// mémorise son cache par URL, deux sources partageant la même ne seraient
+		// pas récupérées séparément.
+		if ( '' !== $slug ) {
+			$url = add_query_arg( 'cal', $slug, $url );
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Retourne les agendas configurés, débarrassés des lignes inexploitables.
+	 *
+	 * @return array Liste de array( 'slug' => …, 'label' => …, 'url' => …, 'color' => … ).
+	 */
+	public static function get_calendars() {
+		$options   = BN_Settings::get_options();
+		$calendars = isset( $options['calendars'] ) ? (array) $options['calendars'] : array();
+		$valid     = array();
+
+		foreach ( $calendars as $calendar ) {
+			if ( empty( $calendar['url'] ) || empty( $calendar['slug'] ) ) {
+				continue;
+			}
+			$valid[] = $calendar;
+		}
+
+		return $valid;
+	}
+
+	/**
+	 * Vide les caches de flux : ceux des agendas fournis, et l'ancienne clé unique.
+	 *
+	 * @param array|null $calendars Agendas à purger ; par défaut ceux enregistrés.
+	 */
+	public static function purge_cache( $calendars = null ) {
+		if ( null === $calendars ) {
+			$calendars = self::get_calendars();
+		}
+
+		foreach ( (array) $calendars as $calendar ) {
+			if ( ! empty( $calendar['slug'] ) ) {
+				delete_transient( self::TRANSIENT_PREFIX . $calendar['slug'] );
+			}
+		}
+
+		delete_transient( self::LEGACY_TRANSIENT_KEY );
 	}
 
 	/**
@@ -94,19 +157,38 @@ class BN_Ics_Proxy {
 	 * Source unique des créneaux côté serveur : le rendu HTML du shortcode et le
 	 * schema.org en tirent tous deux leurs données, sur la même fenêtre.
 	 *
-	 * @return array Occurrences au format BN_Ics_Parser::occurrences(), éventuellement vide.
+	 * @return array Occurrences au format BN_Ics_Parser::occurrences(), plus la clé
+	 *               'calendar' (nom de l'agenda d'origine). Éventuellement vide.
 	 */
 	public static function get_week_occurrences() {
-		$ics = self::get_ics();
+		$timezone    = wp_timezone();
+		$from        = current_datetime()->setTimezone( $timezone )->modify( 'monday this week' )->setTime( 0, 0 );
+		$to          = $from->modify( '+7 days' );
+		$occurrences = array();
 
-		if ( null === $ics ) {
-			return array();
+		foreach ( self::get_calendars() as $calendar ) {
+			$ics = self::get_ics( $calendar['slug'] );
+
+			if ( null === $ics ) {
+				continue;
+			}
+
+			foreach ( BN_Ics_Parser::occurrences( $ics, $from, $to, $timezone ) as $occurrence ) {
+				// Le flux ICS ne dit pas de quel agenda il vient : le nom est ajouté ici.
+				$occurrence['calendar'] = $calendar['label'];
+				$occurrences[]          = $occurrence;
+			}
 		}
 
-		$timezone = wp_timezone();
-		$from     = current_datetime()->setTimezone( $timezone )->modify( 'monday this week' )->setTime( 0, 0 );
+		// Chaque flux est trié, leur concaténation ne l'est pas.
+		usort(
+			$occurrences,
+			static function ( $a, $b ) {
+				return $a['start'] <=> $b['start'];
+			}
+		);
 
-		return BN_Ics_Parser::occurrences( $ics, $from, $from->modify( '+7 days' ), $timezone );
+		return $occurrences;
 	}
 
 	/**
@@ -116,20 +198,31 @@ class BN_Ics_Proxy {
 	 * (qui en tire le rendu serveur des créneaux) : les deux passent par le même
 	 * transient, donc une seule requête sortante toutes les CACHE_TTL secondes.
 	 *
-	 * @return string|null Contenu du flux, ou null si non configuré ou injoignable.
+	 * @param string $slug Identifiant de l'agenda tel qu'enregistré dans les réglages.
+	 * @return string|null Contenu du flux, ou null si l'agenda est inconnu ou injoignable.
 	 */
-	public static function get_ics() {
-		$options = BN_Settings::get_options();
-		$ics_url = isset( $options['ics_url'] ) ? $options['ics_url'] : '';
+	public static function get_ics( $slug ) {
+		$ics_url = '';
 
-		if ( empty( $ics_url ) ) {
+		// L'URL n'est jamais prise dans la requête : on ne retient que celle
+		// enregistrée pour ce slug (sinon le proxy deviendrait un relais ouvert).
+		foreach ( self::get_calendars() as $calendar ) {
+			if ( $slug === $calendar['slug'] ) {
+				$ics_url = $calendar['url'];
+				break;
+			}
+		}
+
+		if ( '' === $ics_url ) {
 			return null;
 		}
 
-		$body = get_transient( self::TRANSIENT_KEY );
+		$cached = get_transient( self::TRANSIENT_PREFIX . $slug );
 
-		if ( false !== $body ) {
-			return $body;
+		// La chaîne vide est le marqueur d'un flux qu'on vient de trouver en panne :
+		// on ne le rappelle pas avant l'expiration du marqueur.
+		if ( is_string( $cached ) ) {
+			return '' !== $cached ? $cached : null;
 		}
 
 		$response = wp_remote_get(
@@ -141,12 +234,22 @@ class BN_Ics_Proxy {
 			)
 		);
 
-		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+		$body = is_wp_error( $response ) ? '' : wp_remote_retrieve_body( $response );
+
+		// Un 200 ne suffit pas : un portail captif ou un proxy sortant répond
+		// volontiers une page HTML d'erreur, qu'on servirait alors 15 minutes durant
+		// comme un flux valide — sans jamais émettre le 502 qui l'aurait signalée.
+		$valid = ! is_wp_error( $response )
+			&& 200 === (int) wp_remote_retrieve_response_code( $response )
+			&& false !== strpos( $body, 'BEGIN:VCALENDAR' );
+
+		if ( ! $valid ) {
+			set_transient( self::TRANSIENT_PREFIX . $slug, '', self::FAILURE_TTL );
+
 			return null;
 		}
 
-		$body = wp_remote_retrieve_body( $response );
-		set_transient( self::TRANSIENT_KEY, $body, self::CACHE_TTL );
+		set_transient( self::TRANSIENT_PREFIX . $slug, $body, self::CACHE_TTL );
 
 		return $body;
 	}
@@ -159,12 +262,30 @@ class BN_Ics_Proxy {
 	 * on diffuse du text/calendar brut, tel que le connecteur iCalendar l'attend.
 	 */
 	public function serve() {
-		$body = self::get_ics();
+		$calendars = self::get_calendars();
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- flux public en lecture, servi aux visiteurs anonymes.
+		$slug = isset( $_GET['cal'] ) ? sanitize_key( wp_unslash( $_GET['cal'] ) ) : '';
+
+		// Paramètre absent : on sert le premier agenda. Les pages déjà en cache
+		// appellent l'URL sans « cal » et ne doivent pas tomber en 404.
+		if ( '' === $slug && array() !== $calendars ) {
+			$slug = $calendars[0]['slug'];
+		}
+
+		$body = '' !== $slug ? self::get_ics( $slug ) : null;
 
 		if ( null === $body ) {
-			$options = BN_Settings::get_options();
-			// Distingue « pas d'agenda configuré » (404) de « flux injoignable » (502).
-			status_header( empty( $options['ics_url'] ) ? 404 : 502 );
+			// Distingue « agenda inconnu ou non configuré » (404) de « flux injoignable » (502).
+			$known = false;
+			foreach ( $calendars as $calendar ) {
+				if ( $slug === $calendar['slug'] ) {
+					$known = true;
+					break;
+				}
+			}
+
+			status_header( $known ? 502 : 404 );
 			nocache_headers();
 			exit;
 		}
