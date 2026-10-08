@@ -232,8 +232,11 @@
 	text-transform: uppercase;
 }
 
-/* Libellé de la date dans l'en-tête de jour (vue liste) : couleur accent-1 du thème. */
-.bn-calendar .fc-list-day-text {
+/* Jour (à gauche) et date (à droite) de l'en-tête de jour, en vue liste : couleur
+   accent-1 du thème. Ce sont des liens : sans cette règle, ils prennent la couleur de
+   lien du thème, illisible sur le fond foncé de l'en-tête. */
+.bn-calendar .fc-list-day-text,
+.bn-calendar .fc-list-day-side-text {
 	color: var(--wp--preset--color--accent-1, var(--bn-citron));
 }
 

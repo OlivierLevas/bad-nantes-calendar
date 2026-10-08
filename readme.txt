@@ -105,6 +105,8 @@ et accessible depuis le serveur du site.
 * La légende devient un filtre à choix unique, présenté en cases à cocher : tous
   les agendas sont affichés tant qu'aucune case n'est cochée ; cocher un agenda
   n'affiche que lui, le décocher réaffiche tout.
+* Vue planning : la date à droite de l'en-tête de jour redevient lisible (elle
+  prenait la couleur de lien du thème, foncée sur fond foncé).
 
 = 1.1.1 =
 * Les événements reprennent le dessin des cartes de créneaux du site : fond
