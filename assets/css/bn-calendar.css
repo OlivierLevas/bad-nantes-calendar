@@ -107,6 +107,8 @@
 /* Contenu personnalisé des cartes (heure début–fin, titre, bloc lieu) */
 .bn-calendar .bn-event {
 	padding: calc(var(--wp--preset--spacing--20, 10px) / 2) var(--wp--preset--spacing--20, 10px);
+	/* Taille du texte courant du thème : FullCalendar réduit sinon les événements à 0.85em. */
+	font-size: var(--wp--preset--font-size--medium, 1rem);
 	line-height: 1.25;
 	/* Autorise le retour à la ligne (FullCalendar force nowrap sur certaines vues). */
 	white-space: normal;
@@ -115,7 +117,6 @@
 /* Heure : même traitement que les horaires des cartes de créneaux (titres du thème). */
 .bn-calendar .bn-event-time {
 	font-family: var(--wp--preset--font-family--barlow-condensed, inherit);
-	font-size: var(--wp--preset--font-size--small, 0.875em);
 	font-weight: 700;
 	text-transform: uppercase;
 }

@@ -4,7 +4,7 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -97,6 +97,11 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.1.2 =
+* Heure et titre des événements agrandis : ils prennent la taille du texte courant
+  du thème (preset `medium`) au lieu des 0.85em de FullCalendar. Le lieu reste en
+  `small`.
 
 = 1.1.1 =
 * Les événements reprennent le dessin des cartes de créneaux du site : fond
