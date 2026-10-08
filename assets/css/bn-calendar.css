@@ -260,7 +260,7 @@
 	}
 }
 
-/* Légende cliquable : elle nomme les agendas et sert de filtre. Construite par
+/* Légende : elle nomme les agendas et sert de filtre à choix unique. Construite par
    bn-init.js, donc absente si le JS échoue — et absente aussi s'il n'y a qu'un
    seul agenda, où elle n'apprendrait rien. */
 .bn-calendar-legend {
@@ -287,31 +287,40 @@
 }
 
 .bn-calendar-legend .bn-legend-item:focus-visible {
-	outline: 2px solid var(--wp--preset--color--accent-1, var(--bn-vert-fonce));
+	outline: 2px solid var(--wp--preset--color--base, var(--bn-vert-fonce));
 	outline-offset: 1px;
 }
 
-.bn-calendar-legend .bn-legend-dot {
+/* Case à cocher : bordure à la couleur de l'agenda, fond et coche aux couleurs du
+   thème — la coche reste lisible quelle que soit la couleur choisie pour l'agenda. */
+.bn-calendar-legend .bn-legend-box {
+	display: inline-flex;
 	flex: none;
-	width: 12px;
-	height: 12px;
-	border-radius: 50%;
-	/* Bordure toujours dessinée : elle sert de contour quand l'agenda est masqué. */
-	border: 2px solid var(--bn-legend-color, var(--wp--preset--color--accent-1, var(--bn-vert-fonce)));
-	background-color: var(--bn-legend-color, var(--wp--preset--color--accent-1, var(--bn-vert-fonce)));
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border: 2px solid var(--bn-legend-color, var(--wp--preset--color--base, var(--bn-vert-fonce)));
+	background-color: var(--wp--preset--color--accent-1, var(--bn-texte-clair));
 }
 
-/* Agenda masqué : pastille en contour seul, libellé estompé et barré. */
+.bn-calendar-legend .bn-legend-item[aria-checked="true"] .bn-legend-box::after {
+	content: "";
+	width: 5px;
+	height: 9px;
+	margin-top: -2px;
+	border: solid var(--wp--preset--color--base, var(--bn-vert-fonce));
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+
+.bn-calendar-legend .bn-legend-item[aria-checked="true"] .bn-legend-label {
+	font-weight: 600;
+}
+
+/* Agenda écarté par le choix d'un autre : entrée estompée. */
 .bn-calendar-legend .bn-legend-item.is-off {
 	opacity: 0.55;
-}
-
-.bn-calendar-legend .bn-legend-item.is-off .bn-legend-dot {
-	background-color: transparent;
-}
-
-.bn-calendar-legend .bn-legend-item.is-off .bn-legend-label {
-	text-decoration: line-through;
 }
 
 /* Créneaux rendus par PHP.

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Bad'Nantes Calendar
  * Plugin URI:        https://github.com/OlivierLevas/bad-nantes-calendar
- * Description:        Affiche les agendas publics du club Bad'Nantes via FullCalendar 6, en vue semaine ou vue mois, avec une légende cliquable pour filtrer les agendas affichés. FullCalendar est embarqué en local, pas de CDN.
+ * Description:        Affiche les agendas publics du club Bad'Nantes via FullCalendar 6, en vue semaine ou vue mois, avec une légende à cases à cocher pour n'afficher qu'un agenda. FullCalendar est embarqué en local, pas de CDN.
  * Version:           1.1.2
  * Requires at least: 5.8
  * Requires PHP:      7.4

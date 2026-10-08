@@ -25,8 +25,8 @@ Caractéristiques :
 
 * Aucune clé API : de simples flux ICS publics suffisent.
 * Plusieurs agendas, chacun avec son nom et sa couleur, superposés dans une seule
-  grille. Une légende cliquable laisse le visiteur masquer ceux qui ne
-  l'intéressent pas.
+  grille. Une légende à cases à cocher laisse le visiteur n'afficher que celui
+  qui l'intéresse.
 * Flux récupéré côté serveur (proxy PHP + cache) : pas de problème de CORS.
 * Événements récurrents (RRULE) et fuseaux gérés via ical.js.
 * FullCalendar 6 embarqué en local (aucune dépendance CDN au runtime).
@@ -102,6 +102,9 @@ et accessible depuis le serveur du site.
 * Heure et titre des événements agrandis : ils prennent la taille du texte courant
   du thème (preset `medium`) au lieu des 0.85em de FullCalendar. Le lieu reste en
   `small`.
+* La légende devient un filtre à choix unique, présenté en cases à cocher : tous
+  les agendas sont affichés tant qu'aucune case n'est cochée ; cocher un agenda
+  n'affiche que lui, le décocher réaffiche tout.
 
 = 1.1.1 =
 * Les événements reprennent le dessin des cartes de créneaux du site : fond

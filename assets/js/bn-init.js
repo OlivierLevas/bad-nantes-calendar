@@ -136,16 +136,21 @@
 	}
 
 	/**
-	 * Construit la légende cliquable, qui sert aussi de filtre.
+	 * Construit la légende, qui sert aussi de filtre à choix unique.
 	 *
-	 * Tous les agendas sont visibles au chargement ; un clic masque ou remontre
-	 * celui de l'entrée. Les entrées sont créées en JS : si le script échoue, on ne
-	 * laisse pas au visiteur des boutons inertes.
+	 * Tous les agendas sont visibles au chargement, aucune case n'étant cochée.
+	 * Cocher une case n'affiche que son agenda et décoche la précédente ; la
+	 * décocher réaffiche tout. Les entrées sont créées en JS : si le script
+	 * échoue, on ne laisse pas au visiteur des cases inertes.
 	 *
-	 * @param {Object}      config   Configuration de l'instance.
-	 * @param {Object}      calendar Instance FullCalendar.
-	 * @param {Array}       sources  Descripteurs passés à FullCalendar.
-	 * @param {HTMLElement} el       Conteneur du calendrier.
+	 * Le filtrage retire et remet les sources plutôt que de masquer leurs
+	 * événements en CSS : la grille se recompose alors correctement (dont le
+	 * compteur « +N »). Le rechargement est servi par le cache HTTP du proxy.
+	 *
+	 * @param {Object}      config    Configuration de l'instance.
+	 * @param {Object}      calendar  Instance FullCalendar.
+	 * @param {Array}       sources   Descripteurs passés à FullCalendar.
+	 * @param {HTMLElement} el        Conteneur du calendrier.
 	 * @param {Function}    setHidden Rappel (slug, isHidden) notant le masquage.
 	 */
 	function buildLegend(config, calendar, sources, el, setHidden) {
@@ -161,38 +166,66 @@
 			legend.setAttribute('aria-label', config.i18n.legendLabel);
 		}
 
+		var boxes = [];
+		// Agenda coché, ou null quand tout est affiché.
+		var selected = null;
+
+		/**
+		 * Coche ou décoche un agenda, puis aligne les cases et les sources.
+		 *
+		 * @param {string} slug Identifiant de l'agenda cliqué.
+		 */
+		function select(slug) {
+			selected = selected === slug ? null : slug;
+
+			for (var i = 0; i < sources.length; i++) {
+				var id = sources[i].id;
+				var visible = null === selected || selected === id;
+				var current = calendar.getEventSourceById(id);
+
+				if (visible && !current) {
+					calendar.addEventSource(sources[i]);
+				} else if (!visible && current) {
+					current.remove();
+				}
+
+				// Un agenda masqué ne doit plus peser sur l'avertissement « flux
+				// injoignable » : sa requête en vol peut encore échouer après coup.
+				setHidden(id, !visible);
+
+				boxes[i].setAttribute('aria-checked', selected === id ? 'true' : 'false');
+				boxes[i].classList.toggle('is-off', !visible);
+			}
+		}
+
 		for (var i = 0; i < sources.length; i++) {
-			legend.appendChild(buildLegendButton(config.calendars[i], sources[i], calendar, setHidden));
+			boxes.push(buildLegendBox(config.calendars[i], select));
+			legend.appendChild(boxes[i]);
 		}
 
 		el.parentNode.insertBefore(legend, el);
 	}
 
 	/**
-	 * Construit une entrée de légende : pastille de couleur + nom de l'agenda.
+	 * Construit une entrée de légende : case à la couleur de l'agenda + son nom.
 	 *
-	 * Le filtrage retire et remet la source plutôt que de masquer ses événements en
-	 * CSS : la grille se recompose alors correctement (dont le compteur « +N »). Le
-	 * rechargement est servi par le cache HTTP du proxy.
-	 *
-	 * @param {Object}   entry     Agenda ({ slug, label, color }).
-	 * @param {Object}   source    Descripteur de source correspondant.
-	 * @param {Object}   calendar  Instance FullCalendar.
-	 * @param {Function} setHidden Rappel (slug, isHidden) notant le masquage.
+	 * @param {Object}   entry  Agenda ({ slug, label, color }).
+	 * @param {Function} select Rappel (slug) appelé au clic.
 	 * @return {HTMLElement}
 	 */
-	function buildLegendButton(entry, source, calendar, setHidden) {
+	function buildLegendBox(entry, select) {
 		var button = document.createElement('button');
 		button.type = 'button';
 		button.className = 'bn-legend-item';
-		button.setAttribute('aria-pressed', 'true');
+		button.setAttribute('role', 'checkbox');
+		button.setAttribute('aria-checked', 'false');
 
-		var dot = document.createElement('span');
-		dot.className = 'bn-legend-dot';
+		var box = document.createElement('span');
+		box.className = 'bn-legend-box';
 		if (entry.color) {
-			dot.style.setProperty('--bn-legend-color', entry.color);
+			box.style.setProperty('--bn-legend-color', entry.color);
 		}
-		button.appendChild(dot);
+		button.appendChild(box);
 
 		var label = document.createElement('span');
 		label.className = 'bn-legend-label';
@@ -200,23 +233,7 @@
 		button.appendChild(label);
 
 		button.addEventListener('click', function () {
-			var visible = 'true' === button.getAttribute('aria-pressed');
-
-			if (visible) {
-				var current = calendar.getEventSourceById(source.id);
-				if (current) {
-					current.remove();
-				}
-			} else {
-				calendar.addEventSource(source);
-			}
-
-			// Un agenda masqué ne doit plus peser sur l'avertissement « flux
-			// injoignable » : sa requête en vol peut encore échouer après coup.
-			setHidden(source.id, visible);
-
-			button.setAttribute('aria-pressed', visible ? 'false' : 'true');
-			button.classList.toggle('is-off', visible);
+			select(entry.slug);
 		});
 
 		return button;

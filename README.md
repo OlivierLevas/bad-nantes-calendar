@@ -6,9 +6,9 @@ en **vue mois** ou **vue semaine**, avec bascule automatique en **vue liste**
 sur mobile.
 
 Les agendas s'affichent **tous en même temps dans la même grille**, chacun dans
-sa couleur. Une **légende cliquable** au-dessus du calendrier les nomme et sert
-de filtre : tout est visible au chargement, un clic masque ou remontre un
-agenda.
+sa couleur. Une **légende à cases à cocher** au-dessus du calendrier les nomme
+et sert de filtre à choix unique : tout est visible au chargement ; cocher un
+agenda n'affiche que lui, le décocher réaffiche tout.
 
 FullCalendar est **embarqué en local** dans le plugin : aucune dépendance à un
 CDN au moment de l'exécution.
