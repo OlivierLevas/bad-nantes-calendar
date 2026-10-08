@@ -45,33 +45,7 @@
 	}
 
 	/**
-	 * Choisit une couleur de texte lisible sur un fond donné.
-	 *
-	 * La couleur de chaque agenda est libre : sans ce calcul, un fond clair
-	 * rendrait le texte blanc du thème illisible. Luminance perçue (ITU-R BT.601).
-	 *
-	 * @param {string} background Couleur de fond, au format #rgb ou #rrggbb.
-	 * @return {string} '#111' sur fond clair, '#fff' sur fond sombre.
-	 */
-	function readableTextColor(background) {
-		var hex = String(background || '').replace('#', '');
-
-		if (hex.length === 3) {
-			hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-		}
-		if (hex.length !== 6) {
-			return '';
-		}
-
-		var r = parseInt(hex.slice(0, 2), 16);
-		var g = parseInt(hex.slice(2, 4), 16);
-		var b = parseInt(hex.slice(4, 6), 16);
-
-		return (r * 299 + g * 587 + b * 114) / 1000 > 140 ? '#111' : '#fff';
-	}
-
-	/**
-	 * Construit le contenu d'une pastille d'événement : heure, titre, puis le
+	 * Construit le contenu d'une carte d'événement : heure, titre, puis le
 	 * bloc HTML associé au lieu (si configuré).
 	 *
 	 * @param {Object} arg    Argument fourni par FullCalendar (event, timeText).
@@ -359,22 +333,12 @@
 			eventContent: function (arg) {
 				return { domNodes: [buildEventNode(arg, config)] };
 			},
-			// Couleur de l'agenda d'origine, posée en variables CSS sur l'élément
-			// de l'événement : la pastille, la bordure et le liseré dessinés par
-			// FullCalendar en héritent d'un coup. Sans couleur configurée, le CSS
-			// garde celle du thème.
+			// Couleur de l'agenda d'origine, posée en variable CSS sur l'élément de
+			// l'événement : le CSS en fait le liseré de la carte. Sans couleur
+			// configurée, le liseré garde celle de la bordure.
 			eventDidMount: function (arg) {
-				var background = arg.backgroundColor;
-
-				if (!background) {
-					return;
-				}
-
-				arg.el.style.setProperty('--bn-event-bg', background);
-
-				var foreground = readableTextColor(background);
-				if (foreground) {
-					arg.el.style.setProperty('--bn-event-fg', foreground);
+				if (arg.backgroundColor) {
+					arg.el.style.setProperty('--bn-agenda-color', arg.backgroundColor);
 				}
 			},
 			headerToolbar: {

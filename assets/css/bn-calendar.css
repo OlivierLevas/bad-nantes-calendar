@@ -80,46 +80,44 @@
 	color: var(--wp--preset--color--base, var(--bn-texte-clair));
 }
 
-/* Événements.
-   --bn-event-bg / --bn-event-fg sont posées par bn-init.js (eventDidMount) à partir
-   de la couleur de l'agenda d'origine ; sans agenda coloré, on retombe sur la charte
-   du club. Pas d'alternance de teinte ici : la couleur d'un événement ne dit plus
-   qu'une chose, de quel agenda il vient. */
+/* Événements : carte blanche bordée, comme les cartes de créneaux du site.
+   --bn-agenda-color est posée par bn-init.js (eventDidMount) à partir de la couleur
+   de l'agenda d'origine : elle ne colore plus que le liseré de gauche. Sans agenda
+   coloré, le liseré prend la couleur de la bordure.
+   Couleurs, espacements et polices viennent des presets du thème (--wp--preset--*),
+   avec la charte du club en repli hors de ce thème. */
 .bn-calendar .fc-event,
 .bn-calendar .fc-event .fc-event-main {
-	background-color: var(--bn-event-bg, var(--bn-vert-fonce));
-	border-color: var(--bn-event-bg, var(--bn-vert-fonce));
-	color: var(--bn-event-fg, var(--bn-citron));
+	background-color: var(--wp--preset--color--accent-1, var(--bn-texte-clair));
+	color: var(--wp--preset--color--base, var(--bn-vert-fonce));
 	border-radius: 0;
 }
 
-.bn-calendar .fc-event-title,
-.bn-calendar .fc-event-time {
-	color: var(--bn-event-fg, var(--bn-citron));
-}
-
-/* Événements daygrid (mois/semaine) : pas de marge autour. !important requis pour
-   battre les défauts FullCalendar (.fc-direction-ltr .fc-daygrid-event.fc-event-start,
-   spécificité plus forte + injectés au runtime). */
+/* Événements daygrid (mois/semaine). !important requis : FullCalendar pose le fond et
+   la bordure en style inline à partir de la couleur de la source, et ses marges par
+   défaut (.fc-direction-ltr .fc-daygrid-event.fc-event-start) sont plus spécifiques. */
 .bn-calendar .fc-daygrid-event {
-	margin: 0 !important;
+	margin: 0 0 4px !important;
+	border-width: 1px 1px 1px 4px;
+	border-color: var(--wp--preset--color--base, var(--bn-vert-fonce)) !important;
+	border-left-color: var(--bn-agenda-color, var(--wp--preset--color--base, var(--bn-vert-fonce))) !important;
+	background-color: var(--wp--preset--color--accent-1, var(--bn-texte-clair)) !important;
 }
 
-/* Contenu personnalisé des pastilles (heure début–fin, titre, bloc lieu) */
+/* Contenu personnalisé des cartes (heure début–fin, titre, bloc lieu) */
 .bn-calendar .bn-event {
-	padding: 2px 4px;
+	padding: calc(var(--wp--preset--spacing--20, 10px) / 2) var(--wp--preset--spacing--20, 10px);
 	line-height: 1.25;
 	/* Autorise le retour à la ligne (FullCalendar force nowrap sur certaines vues). */
 	white-space: normal;
-	/* Fond = couleur de l'agenda, sinon accent-1 du thème (fallback vert club). */
-	background-color: var(--bn-event-bg, var(--wp--preset--color--accent-1, var(--bn-vert-fonce)));
-	/* Texte = couleur lisible sur ce fond, sinon base du thème (fallback texte clair). */
-	color: var(--bn-event-fg, var(--wp--preset--color--base, var(--bn-texte-clair)));
 }
 
+/* Heure : même traitement que les horaires des cartes de créneaux (titres du thème). */
 .bn-calendar .bn-event-time {
+	font-family: var(--wp--preset--font-family--barlow-condensed, inherit);
+	font-size: var(--wp--preset--font-size--small, 0.875em);
 	font-weight: 700;
-	font-size: 0.85em;
+	text-transform: uppercase;
 }
 
 .bn-calendar .bn-event-title {
@@ -127,9 +125,8 @@
 }
 
 .bn-calendar .bn-event-location {
-	margin-top: 2px;
-	font-size: 0.85em;
-	opacity: 0.95;
+	margin-top: calc(var(--wp--preset--spacing--20, 10px) / 2);
+	font-size: var(--wp--preset--font-size--small, 0.875em);
 }
 
 /* Bloc lieu — le gabarit par défaut n'utilise QUE des classes .bn-loc* : aucune règle de
@@ -140,15 +137,15 @@
 	align-items: center;
 }
 
-/* Icône Maps : couleurs inversées par rapport à la pastille.
+/* Icône Maps : pastille pleine, aux couleurs inverses de la carte.
    Sélecteur volontairement à 3 classes (0-3-0) : FullCalendar injecte au runtime
    « .fc .fc-list-event-title a { color: inherit } » (0-2-1), qui attrape ce lien en vue
    liste. Ne pas raccourcir en « .bn-calendar .bn-loc-icon » : l'icône perdrait sa couleur. */
 .bn-calendar .bn-event-location .bn-loc-icon {
 	display: flex;
-	padding: 10px;
-	background-color: var(--wp--preset--color--base, var(--bn-texte-clair));
-	color: var(--wp--preset--color--accent-1, var(--bn-vert-fonce));
+	padding: var(--wp--preset--spacing--20, 10px);
+	background-color: var(--wp--preset--color--base, var(--bn-vert-fonce));
+	color: var(--wp--preset--color--accent-1, var(--bn-texte-clair));
 	text-decoration: none;
 }
 
@@ -164,7 +161,7 @@
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
-	padding-left: 4px;
+	padding-left: calc(var(--wp--preset--spacing--20, 10px) / 2);
 }
 
 .bn-calendar .bn-loc-name {
@@ -172,28 +169,18 @@
 }
 
 .bn-calendar .bn-loc-address {
-	color: var(--wp--preset--color--accent-4, var(--bn-citron));
+	color: var(--wp--preset--color--accent-4, inherit);
 }
 
 .bn-calendar .bn-event-location img {
 	max-width: 100%;
 	height: auto;
-	border-radius: 3px;
 }
 
-/* Vue liste : la pastille .bn-event garde le fond de son agenda, donc le texte doit
-   suivre la couleur calculée pour ce fond. Sans agenda coloré, on retombe sur le vert
-   foncé d'origine, lisible sur le fond clair de la liste. */
-.bn-calendar .fc-list-event .bn-event-time,
-.bn-calendar .fc-list-event .bn-event-title,
-.bn-calendar .fc-list-event .bn-event-location {
-	color: var(--bn-event-fg, var(--bn-vert-fonce));
-}
-
-/* Pastille de couleur de la vue liste : laissée visible, c'est l'indicateur
-   d'agenda que FullCalendar dessine gratuitement à partir de la couleur de source. */
+/* Pastille de couleur de la vue liste : c'est l'indicateur d'agenda que FullCalendar
+   dessine gratuitement à partir de la couleur de source ; elle y tient lieu de liseré. */
 .bn-calendar .fc-list-event-dot {
-	border-color: var(--bn-event-bg, var(--bn-vert-fonce));
+	border-color: var(--bn-agenda-color, var(--wp--preset--color--base, var(--bn-vert-fonce)));
 }
 
 /* Titre du calendrier */
@@ -250,7 +237,7 @@
 }
 
 .bn-calendar .fc-list-event:hover td {
-	background-color: var(--bn-citron-clair);
+	background-color: var(--wp--preset--color--accent-2, var(--bn-citron-clair));
 }
 
 /* Lien de titre de FullCalendar (vue liste). Enfant direct uniquement : un sélecteur
@@ -329,7 +316,8 @@
 /* Créneaux rendus par PHP.
    Ce bloc n'est visible que le temps du chargement de FullCalendar, qui vide le
    conteneur au démarrage. Il reste affiché si le JS échoue : il doit donc être
-   lisible tel quel, et non un simple entrefilet technique. */
+   lisible tel quel, et non un simple entrefilet technique. Même carte que les
+   événements, sans liseré : ce HTML ne porte pas la couleur de l'agenda. */
 .bn-slots {
 	list-style: none;
 	margin: 0;
@@ -343,33 +331,25 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
-	padding: 10px 12px;
-	border-radius: var(--bn-radius);
-	background: var(--bn-vert-fonce);
-	color: var(--bn-texte-clair);
-}
-
-.bn-slot:nth-of-type(even) {
-	background: var(--bn-vert-clair);
+	padding: var(--wp--preset--spacing--20, 10px);
+	border: 1px solid var(--wp--preset--color--base, var(--bn-vert-fonce));
+	background: var(--wp--preset--color--accent-1, var(--bn-texte-clair));
+	color: var(--wp--preset--color--base, var(--bn-vert-fonce));
 }
 
 .bn-slot-time {
+	font-family: var(--wp--preset--font-family--barlow-condensed, inherit);
 	font-weight: 700;
-	text-transform: capitalize;
+	text-transform: uppercase;
 }
 
 .bn-slot-title {
-	color: var(--wp--preset--color--accent-4, var(--bn-citron));
 	font-weight: 600;
 }
 
-.bn-slot-location {
-	font-size: 0.9em;
-	opacity: 0.95;
-}
-
-/* Agenda d'origine du créneau, affiché seulement quand il y en a plusieurs. */
+/* Lieu, et agenda d'origine du créneau (affiché seulement quand il y en a plusieurs). */
+.bn-slot-location,
 .bn-slot-cal {
-	font-size: 0.85em;
-	opacity: 0.85;
+	color: var(--wp--preset--color--accent-4, inherit);
+	font-size: var(--wp--preset--font-size--small, 0.875em);
 }

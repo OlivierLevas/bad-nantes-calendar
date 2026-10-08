@@ -4,7 +4,7 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -97,6 +97,17 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.1.1 =
+* Les événements reprennent le dessin des cartes de créneaux du site : fond
+  blanc, bordure et texte dans la couleur de base, adresse en gris. La couleur de
+  l'agenda n'est plus le fond de l'événement mais un liseré à gauche (la pastille
+  ronde en tient lieu dans la vue planning).
+* Couleurs, espacements et polices des événements viennent des presets du thème
+  (`--wp--preset--*`) : un changement de palette dans l'éditeur se répercute sur
+  le calendrier. La charte du club reste le repli hors d'un thème à presets.
+* Les créneaux rendus en HTML (avant le chargement du calendrier, ou si le
+  JavaScript échoue) suivent le même dessin.
 
 = 1.1.0 =
 * Plusieurs agendas au lieu d'un seul : la page de réglages propose désormais une
