@@ -1,7 +1,10 @@
 <!doctype html>
 <!--
-	Tests du repli de bn-init.js : les créneaux rendus par PHP doivent rester
-	lisibles quand le calendrier ne peut pas s'afficher.
+	Tests de bn-init.js.
+
+	Repli : les créneaux rendus par PHP doivent rester lisibles quand le
+	calendrier ne peut pas s'afficher.
+	Boutons de vue : Mois et Semaine au-dessus du seuil mobile, Planning en dessous.
 
 	Un cas par chargement, choisi par ?cas=… ; le résultat est écrit dans
 	#resultat. Lancé par tests/run dans Chrome headless.
@@ -25,7 +28,11 @@ var flux = {
 	'panne-sans-repli': ['ko', 'ko'],
 	partiel: ['ok', 'ko'],
 	exception: ['ok', 'ok']
-}[cas];
+}[cas] || ['ok', 'ok'];
+
+// Chrome headless ne descend pas sous 500 px de large : le cas mobile relève
+// le seuil au lieu de réduire la fenêtre.
+var seuil = cas === 'boutons-mobile' ? 5000 : 600;
 
 var ICS = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:1\r\n' +
 	'DTSTART:20260101T180000Z\r\nDTEND:20260101T200000Z\r\nRRULE:FREQ=DAILY\r\n' +
@@ -48,7 +55,7 @@ el.setAttribute('data-config', JSON.stringify({
 	mobileView: 'listWeek',
 	firstDay: 1,
 	locale: 'fr',
-	mobileBreakpoint: 600,
+	mobileBreakpoint: seuil,
 	locationHtml: [],
 	i18n: { loadError: 'Agenda indisponible', legendLabel: 'Agendas' }
 }));
@@ -71,14 +78,29 @@ if (cas === 'exception') {
 <script src="../assets/js/bn-init.js"></script>
 <script>
 window.addEventListener('load', function () {
+	// Passage sous le seuil après le rendu, comme une fenêtre qu'on rétrécit.
+	if (cas === 'boutons-bascule') {
+		Object.defineProperty(window, 'innerWidth', { value: 400, configurable: true });
+		window.dispatchEvent(new Event('resize'));
+	}
+
 	setTimeout(function () {
-		var vu = {
+		var boutons = cas.indexOf('boutons-') === 0;
+		var vu = boutons ? {
+			mois: !!document.querySelector('.fc-dayGridMonth-button'),
+			semaine: !!document.querySelector('.fc-dayGridWeek-button'),
+			planning: !!document.querySelector('.fc-listWeek-button'),
+			vuePlanning: !!document.querySelector('.fc-listWeek-view')
+		} : {
 			repli: !!document.querySelector('.bn-calendar .bn-slots'),
 			calendrier: !!document.querySelector('.bn-calendar .fc-view-harness'),
 			legende: !!document.querySelector('.bn-calendar-legend'),
 			avertissement: !!document.querySelector('.bn-calendar-error')
 		};
 		var attendu = {
+			'boutons-pc': { mois: true, semaine: true, planning: false, vuePlanning: false },
+			'boutons-mobile': { mois: false, semaine: false, planning: true, vuePlanning: true },
+			'boutons-bascule': { mois: false, semaine: false, planning: true, vuePlanning: true },
 			ok: { repli: false, calendrier: true, legende: true, avertissement: false },
 			panne: { repli: true, calendrier: false, legende: false, avertissement: false },
 			'panne-sans-repli': { repli: false, calendrier: true, legende: true, avertissement: true },
@@ -89,7 +111,7 @@ window.addEventListener('load', function () {
 		var conforme = JSON.stringify(vu) === JSON.stringify(attendu);
 		document.getElementById('resultat').textContent = (conforme ? 'OK' : 'FAIL') +
 			' ' + cas + ' ' + JSON.stringify(vu);
-	}, 300);
+	}, 600);
 });
 </script>
 </body>

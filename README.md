@@ -3,7 +3,8 @@
 Plugin WordPress maison du club de badminton **Bad'Nantes**. Il affiche un ou
 plusieurs agendas **publics** via [FullCalendar 6](https://fullcalendar.io/),
 en **vue mois** ou **vue semaine**, avec bascule automatique en **vue liste**
-sur mobile.
+sur mobile. Les boutons de vue suivent l'écran : **Mois** et **Semaine** à
+partir de 600 px (PC et tablette), **Planning** seul en dessous (smartphone).
 
 Les agendas s'affichent **tous en même temps dans la même grille**, chacun dans
 sa couleur. Une **légende à cases à cocher** au-dessus du calendrier les nomme

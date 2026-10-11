@@ -23,6 +23,23 @@
 	}
 
 	/**
+	 * Détermine la barre d'outils selon la largeur d'écran : sur mobile, seul le
+	 * planning est proposé ; au-delà, le mois et la semaine.
+	 *
+	 * @param {Object} config Configuration de l'instance.
+	 * @return {Object} Option headerToolbar de FullCalendar.
+	 */
+	function pickToolbar(config) {
+		var mobile = window.innerWidth < config.mobileBreakpoint;
+
+		return {
+			left: 'prev,next today',
+			center: 'title',
+			right: mobile ? 'listWeek' : 'dayGridMonth,dayGridWeek'
+		};
+	}
+
+	/**
 	 * Retourne le contenu HTML configuré pour le lieu d'un événement, ou une
 	 * chaîne vide. La comparaison est insensible à la casse : on cherche le
 	 * texte « match » (déjà en minuscules) dans le lieu de l'événement.
@@ -416,20 +433,19 @@
 					arg.el.style.setProperty('--bn-agenda-color', arg.backgroundColor);
 				}
 			},
-			headerToolbar: {
-				left: 'prev,next today',
-				center: 'title',
-				right: 'dayGridMonth,dayGridWeek,listWeek'
-			},
+			// Boutons de vue selon la largeur d'écran, comme la vue elle-même.
+			headerToolbar: pickToolbar(config),
 			// Une source iCalendar par agenda, servie par le proxy PHP (same-origin,
 			// pas de CORS). Elles s'affichent toutes en même temps dans la grille.
 			eventSources: sources,
-			// Bascule automatique de vue au redimensionnement (desktop <-> mobile).
+			// Bascule automatique de vue et de boutons au redimensionnement
+			// (desktop <-> mobile).
 			windowResize: function () {
 				var target = pickView(config);
 				if (target !== currentView) {
 					currentView = target;
 					calendar.changeView(target);
+					calendar.setOption('headerToolbar', pickToolbar(config));
 				}
 			}
 		});

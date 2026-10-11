@@ -10,7 +10,7 @@ echecs=0
 php "$dir/ics-proxy-test.php" || echecs=1
 
 echo
-for cas in ok panne panne-sans-repli partiel exception; do
+for cas in ok panne panne-sans-repli partiel exception boutons-pc boutons-mobile boutons-bascule; do
   resultat="$(google-chrome --headless --disable-gpu --virtual-time-budget=5000 \
       --dump-dom "file://$dir/bn-init-test.html?cas=$cas" 2>/dev/null \
     | sed -n 's|.*<pre id="resultat">\(.*\)</pre>.*|\1|p')"

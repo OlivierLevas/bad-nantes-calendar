@@ -4,7 +4,7 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -36,6 +36,8 @@ Caractéristiques :
   déduits du flux ICS et les lieux en `Place`. S'intègre au graphe de Yoast SEO
   s'il est présent, sinon publie son propre bloc JSON-LD.
 * Bascule automatique en vue liste sur mobile (moins de 600px), configurable.
+* Boutons de vue adaptés à l'écran : Mois et Semaine sur PC et tablette, Planning
+  sur smartphone.
 * Bloc d'information par lieu (nom, adresse, lien Maps) sous chaque événement,
   via un gabarit HTML unique.
 * Charte graphique du club Bad'Nantes.
@@ -97,6 +99,11 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.1.4 =
+* Boutons de vue selon l'écran : « Mois » et « Semaine » à partir de 600px (PC et
+  tablette), « Planning » seul en dessous (smartphone). Ils suivent la bascule
+  de vue au redimensionnement.
 
 = 1.1.3 =
 * Flux injoignable côté serveur : le plugin sert la dernière copie valide de
