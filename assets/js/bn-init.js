@@ -152,11 +152,12 @@
 	 * @param {Array}       sources   Descripteurs passés à FullCalendar.
 	 * @param {HTMLElement} el        Conteneur du calendrier.
 	 * @param {Function}    setHidden Rappel (slug, isHidden) notant le masquage.
+	 * @return {HTMLElement|null} La légende, ou null s'il n'y en a pas.
 	 */
 	function buildLegend(config, calendar, sources, el, setHidden) {
 		// Avec un seul agenda, il n'y a rien à distinguer ni à filtrer.
 		if (sources.length < 2) {
-			return;
+			return null;
 		}
 
 		var legend = document.createElement('div');
@@ -204,6 +205,8 @@
 		}
 
 		el.parentNode.insertBefore(legend, el);
+
+		return legend;
 	}
 
 	/**
@@ -271,12 +274,34 @@
 			return;
 		}
 
-		var currentView = pickView(config);
-
 		// Le conteneur arrive pré-rempli avec les créneaux de la semaine rendus par
 		// PHP (contenu lisible par les moteurs de recherche et les robots des IA).
-		// On le vide avant de laisser FullCalendar prendre la place.
+		// On le vide avant de laisser FullCalendar prendre la place, en gardant ces
+		// créneaux de côté : ils reviennent si le calendrier ne peut pas s'afficher.
+		var fallbackHtml = el.innerHTML;
 		el.textContent = '';
+
+		try {
+			startCalendar(el, config, fallbackHtml);
+		} catch (e) {
+			if (window.console && window.console.error) {
+				window.console.error('Bad’Nantes Calendar : calendrier non rendu.', e);
+			}
+			el.innerHTML = fallbackHtml;
+		}
+	}
+
+	/**
+	 * Rend FullCalendar dans un conteneur vidé de ses créneaux PHP.
+	 *
+	 * @param {HTMLElement} el           Élément conteneur.
+	 * @param {Object}      config       Configuration de l'instance.
+	 * @param {string}      fallbackHtml Créneaux rendus par PHP, éventuellement vides.
+	 */
+	function startCalendar(el, config, fallbackHtml) {
+		var currentView = pickView(config);
+		var calendar = null;
+		var legend = null;
 
 		// Avertissement affiché tant qu'au moins un flux est injoignable (proxy en
 		// panne, requête bloquée par un filtrage réseau, réponse illisible…). Sans ce
@@ -290,6 +315,25 @@
 		var failed = {};
 		// Agendas masqués depuis la légende : leur état n'a plus à être signalé.
 		var hidden = {};
+		// Vrai dès qu'un flux a répondu : le calendrier a alors quelque chose à montrer.
+		var loaded = false;
+		// Vrai une fois les créneaux PHP remis à la place du calendrier.
+		var restored = false;
+
+		/**
+		 * Remet les créneaux PHP à la place d'un calendrier resté vide.
+		 */
+		function restoreFallback() {
+			restored = true;
+			calendar.destroy();
+			if (legend) {
+				legend.parentNode.removeChild(legend);
+			}
+			if (warningEl) {
+				warningEl.parentNode.removeChild(warningEl);
+			}
+			el.innerHTML = fallbackHtml;
+		}
 
 		/**
 		 * Note l'état d'un flux et met l'avertissement à jour en conséquence.
@@ -300,12 +344,14 @@
 		function reportSourceState(slug, ok) {
 			// Retirer une source n'annule pas sa requête en vol : l'échec d'un agenda
 			// que le visiteur vient de masquer ne doit pas ressusciter l'avertissement.
-			if (!ok && hidden[slug]) {
+			if (restored || (!ok && hidden[slug])) {
 				return;
 			}
 
 			if (ok) {
 				delete failed[slug];
+				// Un agenda masqué est déclaré « ok » sans que son flux ait répondu.
+				loaded = loaded || !hidden[slug];
 			} else {
 				failed[slug] = true;
 				if (window.console && window.console.error) {
@@ -313,12 +359,24 @@
 				}
 			}
 
-			var broken = false;
+			var failedCount = 0;
 			for (var key in failed) {
 				if (Object.prototype.hasOwnProperty.call(failed, key)) {
-					broken = true;
-					break;
+					failedCount++;
 				}
+			}
+			var broken = failedCount > 0;
+
+			// Aucun flux n'a répondu : plutôt qu'un calendrier vide sous un
+			// avertissement, on remet les créneaux PHP. Différé, pour ne pas détruire
+			// le calendrier depuis l'un de ses propres rappels.
+			if (!loaded && fallbackHtml && failedCount === config.calendars.length) {
+				window.setTimeout(function () {
+					if (!restored) {
+						restoreFallback();
+					}
+				}, 0);
+				return;
 			}
 
 			if (broken && !warningEl) {
@@ -335,7 +393,7 @@
 
 		var sources = buildSources(config, reportSourceState);
 
-		var calendar = new FullCalendar.Calendar(el, {
+		calendar = new FullCalendar.Calendar(el, {
 			initialView: currentView,
 			firstDay: config.firstDay,
 			locale: config.locale,
@@ -394,7 +452,7 @@
 		calendar.render();
 
 		// Après render() : la légende se place juste avant le calendrier rendu.
-		buildLegend(config, calendar, sources, el, setSourceHidden);
+		legend = buildLegend(config, calendar, sources, el, setSourceHidden);
 	}
 
 	/**

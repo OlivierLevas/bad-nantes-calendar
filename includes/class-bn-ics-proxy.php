@@ -45,6 +45,13 @@ class BN_Ics_Proxy {
 	const LEGACY_TRANSIENT_KEY = 'bn_calendar_ics_cache';
 
 	/**
+	 * Préfixe des options gardant la dernière copie valide de chaque flux,
+	 * suffixé par le slug de l'agenda. Sans expiration : elle sert de repli tant
+	 * que le flux distant ne répond pas.
+	 */
+	const BACKUP_PREFIX = 'bn_calendar_ics_last_';
+
+	/**
 	 * Durée du cache en secondes (15 minutes).
 	 */
 	const CACHE_TTL = 900;
@@ -135,6 +142,9 @@ class BN_Ics_Proxy {
 	/**
 	 * Vide les caches de flux : ceux des agendas fournis, et l'ancienne clé unique.
 	 *
+	 * La dernière copie valide part avec : après un changement de réglages, elle
+	 * peut venir d'une autre URL que celle désormais enregistrée pour ce slug.
+	 *
 	 * @param array|null $calendars Agendas à purger ; par défaut ceux enregistrés.
 	 */
 	public static function purge_cache( $calendars = null ) {
@@ -145,6 +155,7 @@ class BN_Ics_Proxy {
 		foreach ( (array) $calendars as $calendar ) {
 			if ( ! empty( $calendar['slug'] ) ) {
 				delete_transient( self::TRANSIENT_PREFIX . $calendar['slug'] );
+				delete_option( self::BACKUP_PREFIX . $calendar['slug'] );
 			}
 		}
 
@@ -198,8 +209,13 @@ class BN_Ics_Proxy {
 	 * (qui en tire le rendu serveur des créneaux) : les deux passent par le même
 	 * transient, donc une seule requête sortante toutes les CACHE_TTL secondes.
 	 *
+	 * Quand le flux distant ne répond pas, la dernière copie valide est servie à
+	 * sa place : les créneaux d'un club changent peu, une copie ancienne vaut
+	 * mieux qu'un calendrier vide.
+	 *
 	 * @param string $slug Identifiant de l'agenda tel qu'enregistré dans les réglages.
-	 * @return string|null Contenu du flux, ou null si l'agenda est inconnu ou injoignable.
+	 * @return string|null Contenu du flux, ou null si l'agenda est inconnu, ou
+	 *                     injoignable sans qu'aucune copie valide n'ait été gardée.
 	 */
 	public static function get_ics( $slug ) {
 		$ics_url = '';
@@ -222,7 +238,7 @@ class BN_Ics_Proxy {
 		// La chaîne vide est le marqueur d'un flux qu'on vient de trouver en panne :
 		// on ne le rappelle pas avant l'expiration du marqueur.
 		if ( is_string( $cached ) ) {
-			return '' !== $cached ? $cached : null;
+			return '' !== $cached ? $cached : self::get_last_valid( $slug );
 		}
 
 		$response = wp_remote_get(
@@ -246,12 +262,26 @@ class BN_Ics_Proxy {
 		if ( ! $valid ) {
 			set_transient( self::TRANSIENT_PREFIX . $slug, '', self::FAILURE_TTL );
 
-			return null;
+			return self::get_last_valid( $slug );
 		}
 
 		set_transient( self::TRANSIENT_PREFIX . $slug, $body, self::CACHE_TTL );
+		// Sans autoload : la copie n'est lue qu'en cas de panne.
+		update_option( self::BACKUP_PREFIX . $slug, $body, false );
 
 		return $body;
+	}
+
+	/**
+	 * Retourne la dernière copie valide gardée pour un agenda.
+	 *
+	 * @param string $slug Identifiant de l'agenda.
+	 * @return string|null Contenu du flux, ou null si aucune copie n'a été gardée.
+	 */
+	private static function get_last_valid( $slug ) {
+		$backup = get_option( self::BACKUP_PREFIX . $slug, '' );
+
+		return is_string( $backup ) && '' !== $backup ? $backup : null;
 	}
 
 	/**

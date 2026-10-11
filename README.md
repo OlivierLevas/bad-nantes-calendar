@@ -99,8 +99,12 @@ bad-nantes-calendar/
     vendor/fullcalendar/         # FullCalendar 6 + connecteur iCalendar + locale fr
     vendor/ical/                 # ical.js (parseur iCal : RRULE, fuseaux)
   lib/plugin-update-checker/     # mises à jour GitHub (Yahnis Elsts)
+  tests/                         # tests du repli (hors zip de release)
   languages/                     # i18n (.pot)
 ```
+
+Tests : `tests/run` lance ceux du proxy ICS (PHP en ligne de commande, sans
+WordPress) puis ceux de `bn-init.js` (Chrome headless).
 
 Avant toute release, pensez à mettre à jour l'URL du dépôt GitHub dans
 `bad-nantes-calendar.php` (constante `BN_CALENDAR_GITHUB_URL`,

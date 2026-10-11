@@ -4,7 +4,7 @@ Tags: calendar, google calendar, fullcalendar, agenda, badminton
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -97,6 +97,15 @@ Vérifiez que l'URL du flux ICS est renseignée et que le flux est bien public
 et accessible depuis le serveur du site.
 
 == Changelog ==
+
+= 1.1.3 =
+* Flux injoignable côté serveur : le plugin sert la dernière copie valide de
+  l'agenda au lieu de ne rien renvoyer. Les créneaux rendus en HTML et le
+  calendrier restent donc remplis pendant une panne de l'agenda distant.
+* Calendrier resté vide (aucun flux ne répond au navigateur, ou erreur
+  JavaScript au rendu) : les créneaux de la semaine rendus en HTML reprennent
+  sa place, au lieu d'une grille vide sous un avertissement.
+* Tests : `tests/run` (PHP en ligne de commande et Chrome headless).
 
 = 1.1.2 =
 * Heure et titre des événements agrandis : ils prennent la taille du texte courant

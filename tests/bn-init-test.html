@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+	Tests du repli de bn-init.js : les créneaux rendus par PHP doivent rester
+	lisibles quand le calendrier ne peut pas s'afficher.
+
+	Un cas par chargement, choisi par ?cas=… ; le résultat est écrit dans
+	#resultat. Lancé par tests/run dans Chrome headless.
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>bn-init : repli</title>
+</head>
+<body>
+<div class="bn-calendar-wrapper"><div id="bn-calendar-1" class="bn-calendar"></div></div>
+<pre id="resultat">EN COURS</pre>
+
+<script>
+var cas = new URLSearchParams(location.search).get('cas');
+
+// Flux servis à FullCalendar : « ok » répond un agenda valide, « ko » un 502.
+var flux = {
+	ok: ['ok', 'ok'],
+	panne: ['ko', 'ko'],
+	'panne-sans-repli': ['ko', 'ko'],
+	partiel: ['ok', 'ko'],
+	exception: ['ok', 'ok']
+}[cas];
+
+var ICS = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:1\r\n' +
+	'DTSTART:20260101T180000Z\r\nDTEND:20260101T200000Z\r\nRRULE:FREQ=DAILY\r\n' +
+	'SUMMARY:Jeu libre\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n';
+
+window.fetch = function (url) {
+	var ok = url.indexOf('ko') === -1;
+	return Promise.resolve(new Response(ok ? ICS : '', { status: ok ? 200 : 502 }));
+};
+
+var el = document.getElementById('bn-calendar-1');
+el.setAttribute('data-config', JSON.stringify({
+	containerId: 'bn-calendar-1',
+	calendars: [
+		{ slug: 'a', label: 'Agenda A', color: '', url: 'https://example.test/' + flux[0] + '-a.ics' },
+		{ slug: 'b', label: 'Agenda B', color: '', url: 'https://example.test/' + flux[1] + '-b.ics' }
+	],
+	configured: true,
+	initialView: 'dayGridWeek',
+	mobileView: 'listWeek',
+	firstDay: 1,
+	locale: 'fr',
+	mobileBreakpoint: 600,
+	locationHtml: [],
+	i18n: { loadError: 'Agenda indisponible', legendLabel: 'Agendas' }
+}));
+
+if (cas !== 'panne-sans-repli') {
+	el.innerHTML = '<ul class="bn-slots"><li class="bn-slot">Créneau PHP</li></ul>';
+}
+</script>
+<script src="../assets/vendor/fullcalendar/index.global.min.js"></script>
+<script src="../assets/vendor/ical/ical.min.js"></script>
+<script src="../assets/vendor/fullcalendar/icalendar.global.min.js"></script>
+<script src="../assets/vendor/fullcalendar/locales-fr.global.min.js"></script>
+<script>
+if (cas === 'exception') {
+	FullCalendar.Calendar = function () {
+		throw new Error('plantage simulé');
+	};
+}
+</script>
+<script src="../assets/js/bn-init.js"></script>
+<script>
+window.addEventListener('load', function () {
+	setTimeout(function () {
+		var vu = {
+			repli: !!document.querySelector('.bn-calendar .bn-slots'),
+			calendrier: !!document.querySelector('.bn-calendar .fc-view-harness'),
+			legende: !!document.querySelector('.bn-calendar-legend'),
+			avertissement: !!document.querySelector('.bn-calendar-error')
+		};
+		var attendu = {
+			ok: { repli: false, calendrier: true, legende: true, avertissement: false },
+			panne: { repli: true, calendrier: false, legende: false, avertissement: false },
+			'panne-sans-repli': { repli: false, calendrier: true, legende: true, avertissement: true },
+			partiel: { repli: false, calendrier: true, legende: true, avertissement: true },
+			exception: { repli: true, calendrier: false, legende: false, avertissement: false }
+		}[cas];
+
+		var conforme = JSON.stringify(vu) === JSON.stringify(attendu);
+		document.getElementById('resultat').textContent = (conforme ? 'OK' : 'FAIL') +
+			' ' + cas + ' ' + JSON.stringify(vu);
+	}, 300);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Lance les tests du plugin : php (proxy ICS) puis Chrome headless (bn-init.js).
+#
+#   tests/run
+set -uo pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+echecs=0
+
+php "$dir/ics-proxy-test.php" || echecs=1
+
+echo
+for cas in ok panne panne-sans-repli partiel exception; do
+  resultat="$(google-chrome --headless --disable-gpu --virtual-time-budget=5000 \
+      --dump-dom "file://$dir/bn-init-test.html?cas=$cas" 2>/dev/null \
+    | sed -n 's|.*<pre id="resultat">\(.*\)</pre>.*|\1|p')"
+  echo "${resultat:-FAIL $cas (aucun résultat)}"
+  [[ "$resultat" == OK* ]] || echecs=1
+done
+
+exit "$echecs"
